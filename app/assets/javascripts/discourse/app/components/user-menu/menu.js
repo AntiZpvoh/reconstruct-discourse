@@ -35,17 +35,17 @@ export default class UserMenu extends GlimmerComponent {
       {
         id: "replies",
         icon: "reply",
-        panelComponent: "user-menu/replied-notifications-list",
+        panelComponent: "user-menu/replies-notifications-list",
       },
       {
         id: "mentions",
         icon: "at",
-        panelComponent: "",
+        panelComponent: "user-menu/mentions-notifications-list",
       },
       {
         id: "likes",
         icon: "heart",
-        panelComponent: "",
+        panelComponent: "user-menu/likes-notifications-list",
       },
       {
         id: "pms",
@@ -53,8 +53,13 @@ export default class UserMenu extends GlimmerComponent {
         panelComponent: "user-menu/pms-notifications-list",
         count:
           this.currentUser.grouped_unread_high_priority_notifications[
-            this.site.notification_types["private_message"]
+            this.site.notification_types.private_message
           ] || 0,
+      },
+      {
+        id: "badges",
+        icon: "certificate",
+        panelComponent: "user-menu/badges-notifications-list",
       },
     ];
   }

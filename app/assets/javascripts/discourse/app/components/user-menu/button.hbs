@@ -6,6 +6,7 @@
     ...attributes
   >
     {{d-icon @icon}}
+    {{yield}}
   </a>
 {{else}}
   <button
@@ -15,5 +16,6 @@
     ...attributes
   >
     {{d-icon @icon}}
+    {{yield}}
   </button>
 {{/if}}

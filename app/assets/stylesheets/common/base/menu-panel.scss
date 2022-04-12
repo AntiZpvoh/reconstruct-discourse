@@ -109,9 +109,18 @@
     .btn {
       display: flex;
       padding: 0.857em;
+      position: relative;
 
       .d-icon {
         color: var(--primary-medium);
+      }
+
+      .badge-notification {
+        background-color: var(--tertiary-med-or-tertiary);
+        position: absolute;
+        right: 6px;
+        top: 6px;
+        font-size: var(--font-down-3);
       }
 
       &.active {

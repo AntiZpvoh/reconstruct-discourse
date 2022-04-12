@@ -20,10 +20,11 @@
               aria-selected={{if (eq tab.id this.currentTabId) "true" "false"}}
               aria-controls={{concat "quick-access-" tab.id}}
               data-tab-number={{tab.position}}
-            />
-            {{#if tab.count}}
-              <span>{{tab.count}}</span>
-            {{/if}}
+            >
+              {{#if tab.count}}
+                <span class="badge-notification">{{tab.count}}</span>
+              {{/if}}
+            </UserMenu::Button>
           {{/each}}
         </div>
         <div class="bottom-tabs tabs-list">

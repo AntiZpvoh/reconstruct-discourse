@@ -35,6 +35,7 @@ class NotificationsController < ApplicationController
           .includes(:topic)
           .recent(limit)
           .where(notification_type: Notification.types[notification_type])
+          .where(user_id: current_user.id)
           .to_a
         render_json_dump(
           notifications: serialize_data(notifications, NotificationSerializer)
