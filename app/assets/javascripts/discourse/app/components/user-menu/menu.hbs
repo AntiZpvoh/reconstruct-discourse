@@ -21,6 +21,9 @@
               aria-controls={{concat "quick-access-" tab.id}}
               data-tab-number={{tab.position}}
             />
+            {{#if tab.count}}
+              <span>{{tab.count}}</span>
+            {{/if}}
           {{/each}}
         </div>
         <div class="bottom-tabs tabs-list">

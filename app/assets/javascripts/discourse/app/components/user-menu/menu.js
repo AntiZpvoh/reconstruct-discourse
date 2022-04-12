@@ -1,6 +1,6 @@
 import GlimmerComponent from "discourse/components/glimmer";
 import { tracked } from "@glimmer/tracking";
-import { action } from "@ember/object";
+import { action, computed } from "@ember/object";
 
 const DefaultTabId = "all-notifications";
 const DefaultPanelComponent = "user-menu/notifications-list";
@@ -46,6 +46,15 @@ export default class UserMenu extends GlimmerComponent {
         id: "likes",
         icon: "heart",
         panelComponent: "",
+      },
+      {
+        id: "pms",
+        icon: "far-envelope",
+        panelComponent: "user-menu/pms-notifications-list",
+        count:
+          this.currentUser.grouped_unread_high_priority_notifications[
+            this.site.notification_types["private_message"]
+          ] || 0,
       },
     ];
   }
