@@ -43,7 +43,7 @@ Either use the root password from the email DigitalOcean sent you when the serve
 Clone the [Official Discourse Docker Image][dd] into `/var/discourse`.
 
     sudo -s
-    git clone https://github.com/discourse/discourse_docker.git /var/discourse
+    git clone https://github.com/AntiZpvoh/rec_discourse_docker.git /var/discourse
     cd /var/discourse
 
 You will need to be root through the rest of the setup and bootstrap process.
