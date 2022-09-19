@@ -36,7 +36,7 @@ class FinalDestination
 
   def initialize(url, opts = nil)
     @url = url
-    @uri = uri(escape_url) if @url
+    @uri = uri(normalized_url) if @url
 
     @opts = opts || {}
     @force_get_hosts = @opts[:force_get_hosts] || []
@@ -45,8 +45,10 @@ class FinalDestination
     @default_user_agent = @opts[:default_user_agent] || DEFAULT_USER_AGENT
     @opts[:max_redirects] ||= 5
     @opts[:lookup_ip] ||= lambda { |host| FinalDestination.lookup_ip(host) }
+    @https_redirect_ignore_limit = @opts[:initial_https_redirect_ignore_limit]
 
-    @limit = @opts[:max_redirects]
+    @max_redirects = @opts[:max_redirects]
+    @limit = @max_redirects
 
     @ignored = []
     if @limit > 0
@@ -94,7 +96,7 @@ class FinalDestination
   end
 
   def redirected?
-    @limit < @opts[:max_redirects]
+    @limit < @max_redirects
   end
 
   def request_headers
@@ -145,26 +147,31 @@ class FinalDestination
     return if @stop_at_blocked_pages && blocked_domain?(@uri)
 
     result, headers_subset = safe_get(@uri, &blk)
-    return nil if !result
+    return if !result
 
     cookie = headers_subset.set_cookie
     location = headers_subset.location
 
-    if result == :redirect && (redirects == 0 || !location)
-      return nil
-    end
-
     if result == :redirect
-      old_port = @uri.port
+      return if !location
+
+      old_uri = @uri
       location = "#{@uri.scheme}://#{@uri.host}#{location}" if location[0] == "/"
       @uri = uri(location)
 
+      if @uri && redirects == @max_redirects && @https_redirect_ignore_limit && same_uri_but_https?(old_uri, @uri)
+        redirects += 1
+        @https_redirect_ignore_limit = false
+      end
+
+      return if redirects == 0
+
       # https redirect, so just cache that whole new domain is https
-      if old_port == 80 && @uri&.port == 443 && (URI::HTTPS === @uri)
+      if old_uri.port == 80 && @uri&.port == 443 && (URI::HTTPS === @uri)
         FinalDestination.cache_https_domain(@uri.hostname)
       end
 
-      return nil if !@uri
+      return if !@uri
 
       extra = nil
       extra = { 'Cookie' => cookie } if cookie
@@ -185,14 +192,14 @@ class FinalDestination
 
     if @limit < 0
       @status = :too_many_redirects
-      log(:warn, "FinalDestination could not resolve URL (too many redirects): #{@uri}") if @verbose
-      return nil
+      log(:warn, "FinalDestination could not resolve URL (too many redirects): #{@uri}")
+      return
     end
 
     unless validate_uri
       @status = :invalid_address
-      log(:warn, "FinalDestination could not resolve URL (invalid URI): #{@uri}") if @verbose
-      return nil
+      log(:warn, "FinalDestination could not resolve URL (invalid URI): #{@uri}")
+      return
     end
 
     @ignored.each do |host|
@@ -315,17 +322,21 @@ class FinalDestination
         return @uri
       end
 
-      old_port = @uri.port
+      old_uri = @uri
       location = "#{location}##{@uri.fragment}" if @preserve_fragment_url && @uri.fragment.present?
       location = "#{@uri.scheme}://#{@uri.host}#{location}" if location[0] == "/"
       @uri = uri(location)
+
+      if @uri && @limit == @max_redirects && @https_redirect_ignore_limit && same_uri_but_https?(old_uri, @uri)
+        @limit += 1
+        @https_redirect_ignore_limit = false
+      end
       @limit -= 1
 
       # https redirect, so just cache that whole new domain is https
-      if old_port == 80 && @uri.port == 443 && (URI::HTTPS === @uri)
+      if old_uri.port == 80 && @uri&.port == 443 && (URI::HTTPS === @uri)
         FinalDestination.cache_https_domain(@uri.hostname)
       end
-
       return resolve
     end
 
@@ -333,10 +344,10 @@ class FinalDestination
     @status = :failure
     @status_code = response.status
 
-    log(:warn, "FinalDestination could not resolve URL (status #{response.status}): #{@uri}") if @verbose
+    log(:warn, "FinalDestination could not resolve URL (status #{response.status}): #{@uri}")
     nil
   rescue Excon::Errors::Timeout
-    log(:warn, "FinalDestination could not resolve URL (timeout): #{@uri}") if @verbose
+    log(:warn, "FinalDestination could not resolve URL (timeout): #{@uri}")
     nil
   end
 
@@ -406,8 +417,8 @@ class FinalDestination
     false
   end
 
-  def escape_url
-    UrlHelper.escape_uri(@url)
+  def normalized_url
+    UrlHelper.normalized_encode(@url)
   end
 
   def private_ranges
@@ -416,6 +427,7 @@ class FinalDestination
   end
 
   def log(log_level, message)
+    return unless @verbose
     return if @status_code == 404
 
     Rails.logger.public_send(
@@ -507,6 +519,12 @@ class FinalDestination
     end
 
     result
+  rescue Timeout::Error
+    log(:warn, "FinalDestination could not resolve URL (timeout): #{@uri}")
+    nil
+  rescue OpenSSL::SSL::SSLError => exception
+    log(:warn, "An error with SSL occurred: #{@uri} #{exception.message}")
+    nil
   rescue StandardError
     unsafe_close ? [:ok, headers_subset] : raise
   end
@@ -545,5 +563,13 @@ class FinalDestination
 
   def blocked_domain?(uri)
     Onebox::DomainChecker.is_blocked?(uri.hostname)
+  end
+
+  def same_uri_but_https?(before, after)
+    before = before.to_s
+    after = after.to_s
+    before.start_with?("http://") &&
+      after.start_with?("https://") &&
+      before.sub("http://", "") == after.sub("https://", "")
   end
 end

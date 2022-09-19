@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe Jobs::PendingReviewablesReminder do
+RSpec.describe Jobs::PendingReviewablesReminder do
   let(:job) { described_class.new }
 
   def create_flag(created_at)
@@ -15,7 +15,7 @@ describe Jobs::PendingReviewablesReminder do
     expect(execute.sent_reminder).to eq(false)
   end
 
-  context "notify_about_flags_after is 0" do
+  context "when notify_about_flags_after is 0" do
     before { SiteSetting.notify_about_flags_after = 0 }
 
     it "never notifies" do
@@ -24,7 +24,21 @@ describe Jobs::PendingReviewablesReminder do
     end
   end
 
-  context "notify_about_flags_after is 48" do
+  context "when notify_about_flags_after accepts a float" do
+    before { SiteSetting.notify_about_flags_after = 0.25 }
+
+    it "doesn't send message when flags are less than 15 minutes old" do
+      create_flag(14.minutes.ago)
+      expect(execute.sent_reminder).to eq(false)
+    end
+
+    it "sends message when there is a flag older than 15 minutes" do
+      create_flag(16.minutes.ago)
+      expect(execute.sent_reminder).to eq(true)
+    end
+  end
+
+  context "when notify_about_flags_after is 48" do
     before do
       SiteSetting.notify_about_flags_after = 48
       described_class.clear_key
@@ -54,7 +68,7 @@ describe Jobs::PendingReviewablesReminder do
       expect(execute.sent_reminder).to eq(true)
     end
 
-    context "reviewable_default_visibility" do
+    context "with reviewable_default_visibility" do
       before do
         create_flag(49.hours.ago)
         create_flag(51.hours.ago)

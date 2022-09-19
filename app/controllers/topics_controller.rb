@@ -66,7 +66,7 @@ class TopicsController < ApplicationController
     opts = params.slice(:username_filters, :filter, :page, :post_number, :show_deleted, :replies_to_post_number, :filter_upwards_post_id, :filter_top_level_replies)
     username_filters = opts[:username_filters]
 
-    opts[:print] = true if params[:print].present?
+    opts[:print] = true if params[:print] == 'true'
     opts[:username_filters] = username_filters.split(',') if username_filters.is_a?(String)
 
     # Special case: a slug with a number in front should look by slug first before looking
@@ -608,10 +608,9 @@ class TopicsController < ApplicationController
 
   def bookmark
     topic = Topic.find(params[:topic_id].to_i)
-    first_post = topic.ordered_posts.first
 
     bookmark_manager = BookmarkManager.new(current_user)
-    bookmark_manager.create(post_id: first_post.id)
+    bookmark_manager.create_for(bookmarkable_id: topic.id, bookmarkable_type: "Topic")
 
     if bookmark_manager.errors.any?
       return render_json_error(bookmark_manager, status: 400)
@@ -622,20 +621,22 @@ class TopicsController < ApplicationController
 
   def destroy
     topic = Topic.with_deleted.find_by(id: params[:id])
+    force_destroy = ActiveModel::Type::Boolean.new.cast(params[:force_destroy])
 
-    force_destroy = false
-    if params[:force_destroy].present?
+    if force_destroy
       if !guardian.can_permanently_delete?(topic)
         return render_json_error topic.cannot_permanently_delete_reason(current_user), status: 403
       end
-
-      force_destroy = true
     else
       guardian.ensure_can_delete!(topic)
     end
 
-    first_post = topic.posts.with_deleted.order(:post_number).first
-    PostDestroyer.new(current_user, first_post, context: params[:context], force_destroy: force_destroy).destroy
+    PostDestroyer.new(
+      current_user,
+      topic.ordered_posts.with_deleted.first,
+      context: params[:context],
+      force_destroy: force_destroy
+    ).destroy
 
     render body: nil
   rescue Discourse::InvalidAccess
@@ -1258,7 +1259,7 @@ class TopicsController < ApplicationController
       topic_query.options[:limit] = false
       topics = topic_query.filter_private_messages_unread(current_user, filter)
     else
-      topics = TopicQuery.unread_filter(topic_query.joined_topic_user, staff: guardian.is_staff?).listable_topics
+      topics = TopicQuery.unread_filter(topic_query.joined_topic_user, whisperer: guardian.is_whisperer?).listable_topics
       topics = TopicQuery.tracked_filter(topics, current_user.id) if params[:tracked].to_s == "true"
 
       if params[:category_id]

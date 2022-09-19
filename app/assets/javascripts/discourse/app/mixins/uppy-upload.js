@@ -120,10 +120,8 @@ export default Mixin.create(UppyS3Multipart, ExtendableUploader, {
       onBeforeUpload: (files) => {
         let tooMany = false;
         const fileCount = Object.keys(files).length;
-        const maxFiles = this.getWithDefault(
-          "maxFiles",
-          this.siteSettings.simultaneous_uploads
-        );
+        const maxFiles =
+          this.maxFiles || this.siteSettings.simultaneous_uploads;
 
         if (this.allowMultipleFiles) {
           tooMany = maxFiles > 0 && fileCount > maxFiles;
@@ -149,7 +147,7 @@ export default Mixin.create(UppyS3Multipart, ExtendableUploader, {
       },
     });
 
-    // droptarget is a UI plugin, only preprocessors must call _useUploadPlugin
+    // DropTarget is a UI plugin, only preprocessors must call _useUploadPlugin
     this._uppyInstance.use(DropTarget, this._uploadDropTargetOptions());
 
     this._uppyInstance.on("progress", (progress) => {
@@ -161,6 +159,10 @@ export default Mixin.create(UppyS3Multipart, ExtendableUploader, {
     });
 
     this._uppyInstance.on("upload", (data) => {
+      if (this.isDestroying || this.isDestroyed) {
+        return;
+      }
+
       this._addNeedProcessing(data.fileIDs.length);
       const files = data.fileIDs.map((fileId) =>
         this._uppyInstance.getFile(fileId)
@@ -259,6 +261,10 @@ export default Mixin.create(UppyS3Multipart, ExtendableUploader, {
 
     this._uppyInstance.on("complete", () => {
       run(() => {
+        if (this.isDestroying || this.isDestroyed) {
+          return;
+        }
+
         this.appEvents.trigger(`upload-mixin:${this.id}:all-uploads-complete`);
         this._reset();
       });
@@ -396,11 +402,8 @@ export default Mixin.create(UppyS3Multipart, ExtendableUploader, {
   },
 
   _xhrUploadUrl() {
-    return (
-      getUrl(this.getWithDefault("uploadUrl", this.uploadRootPath)) +
-      ".json?client_id=" +
-      this.messageBus?.clientId
-    );
+    const uploadUrl = this.uploadUrl || this.uploadRootPath;
+    return getUrl(uploadUrl) + ".json?client_id=" + this.messageBus?.clientId;
   },
 
   _bindFileInputChange() {

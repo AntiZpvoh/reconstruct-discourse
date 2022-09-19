@@ -123,21 +123,15 @@
     z-index: z("base") + 1; // Intentionally overlapping category to create bigger tap target
     font-size: var(--font-up-1);
     a.title {
-      display: block;
       color: var(--primary);
       padding: 0;
     }
     .topic-statuses {
-      padding: 0 0 0.5em 0;
       a {
         line-height: 0.8;
         color: var(--primary-medium);
       }
     }
-  }
-
-  .topic-featured-link {
-    padding: 0;
   }
 
   .badge-notification,
@@ -167,42 +161,34 @@
   }
 
   .topic-item-stats {
-    // disabling clicks because these targets are too small on mobile
-    pointer-events: none;
+    .category,
+    .discourse-tags {
+      // disabling clicks because these targets are too small on mobile
+      pointer-events: none;
+    }
     position: relative;
     display: flex;
     align-items: baseline;
-    z-index: z("base");
     margin-top: 0.5em;
-    .category,
-    .num,
-    .last-poster {
-      float: left;
+    z-index: z("base");
+    .num.activity {
+      margin-left: auto;
+      font-size: var(--font-down-1);
     }
     .category a {
       max-width: 160px;
     }
-    .num .fa,
+    .num .d-icon,
     a,
     a:visited {
       color: var(--primary-med-or-secondary-med);
-    }
-    .activity {
-      margin-left: auto;
-    }
-    .discourse-tags {
-      display: flex;
-      flex-wrap: nowrap;
-      flex: 0 1 auto;
-      overflow: hidden;
     }
   }
 
   .age {
     white-space: nowrap;
     a {
-      color: var(--primary-600);
-      font-size: var(--font-down-1);
+      color: var(--primary-medium);
     }
   }
 }
@@ -459,7 +445,7 @@ td .main-link {
     }
   }
   .num.activity a {
-    padding: 0.5em 0;
+    padding: 0;
   }
   // so the topic excerpt is full width
   // as the containing div is 80%
@@ -485,4 +471,61 @@ td .main-link {
 
 .muted-categories-link {
   margin-left: 0;
+}
+
+// Bulk select
+
+.topic-list-header {
+  display: none;
+}
+
+.topic-list.sticky-header {
+  .topic-list-header {
+    display: table-header-group;
+    position: sticky;
+    z-index: z("base") + 2;
+    top: var(--header-offset);
+    background: var(--secondary);
+    tr {
+      display: flex;
+      align-items: center;
+      border: none;
+    }
+
+    .topic-list-data {
+      display: none;
+      &.bulk-select {
+        display: inline-block;
+      }
+      &.default {
+        display: flex;
+        span:not(.bulk-select-topics) {
+          display: none;
+        }
+      }
+    }
+
+    button.bulk-select {
+      padding-left: 0.85em; // visual alignment
+    }
+  }
+}
+
+.bulk-select-topics {
+  display: flex;
+  padding-left: 0.85em;
+  .btn {
+    margin-right: 0.5em;
+  }
+}
+
+.topic-list-data .pull-left {
+  label {
+    // bulk select checkbox
+    display: flex;
+    width: 45px;
+    height: 45px;
+    justify-content: center;
+    align-items: center;
+  }
 }

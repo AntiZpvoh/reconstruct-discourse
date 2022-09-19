@@ -309,16 +309,13 @@ sk:
             word:
               too_many: "Príliš veľa slov k tej akcii"
       <<: *errors
-  vip_category_name: "Salón"
-  vip_category_description: "Kategória výhradne pre členov so stupňom dôvery 3 a vyšším"
+  general_category_name: "Všeobecné"
   meta_category_name: "Podnety pre tvorcov stránky"
   meta_category_description: "Diskusia o stránke, organizácii, ako funguje a ako ju môžme vylepšit"
   staff_category_name: "Zamestnanci"
   staff_category_description: "Súkromna kategória pre zamestnaneckú diskusiu. Témy su viditeľné len pre správcov a moderátorov diskusie"
   discourse_welcome_topic:
     title: "Vitajte v Discourse"
-  lounge_welcome:
-    title: "Vítajte v Salóne"
   category:
     topic_prefix: "O kategórii: %{category} "
     post_template: "%{replace_paragraph}\n\nDo tohoto odstavce dajte dlhší popis kategórie, alebo popíšte pokyny alebo pravidlá:\n\n- Prečo by ľudia mali použiť túto kategóriu? Na čo je určená?\n\n- V čom sa líši od ostatných existujúcich kategórií ktoré už máte?\n\n- Čo by vo všeobecnosti mala obsahovať téma v tejto kategórií?\n\n- Potrebujeme túto kategóriu? Môžeme ju spojiť s inóu kategóriou alebo pod-kategóriou?\n"
@@ -795,7 +792,6 @@ sk:
     title: "Meno stránok, tak ako je použité v značke title."
     site_description: "Popíšte stránky v jednej vete, tak ako sa popisujú v tagu meta."
     crawl_images: "Načítať obrázky z URL pre vloženie správnej výšky a šírky."
-    download_remote_images_to_local: "Stiahnuť obrázky zo vzdialených zdrojov na lokálne. Zabráni poškodeniu obrázkov. "
     download_remote_images_threshold: "Minimálne miesto na lokálnom disku potrebné na stiahnutie obrázkov zo vzdialených zdrojov (v percentách)"
     disabled_image_download_domains: "Nikdy nesťahovať obrázky z týchto domén. Zoznam oddeleny pipou \"|\"."
     editing_grace_period: "Nevytvárať nové verzie editovaných príspevkov do (n) sekúnd po odoslaní príspevku."
@@ -1250,6 +1246,7 @@ sk:
     signup_after_approval:
       subject_template: "Váš účet bol schválený na %{site_name}!"
   page_not_found:
+    page_title: "Stránka nenájdená"
     title: "Stránka neexistuje alebo je privátna."
     popular_topics: "Populárne"
     recent_topics: "Nedávne"
@@ -1388,25 +1385,12 @@ sk:
       title: "Znova poslať aktivačný email."
   wizard:
     step:
-      forum_title:
-        title: "Meno"
       privacy:
-        title: "Prístup"
         fields:
-          privacy:
-            choices:
-              open:
-                label: "Verejné"
-              restricted:
-                label: "Súkromné"
-      contact:
-        fields:
-          contact_email:
-            placeholder: "meno@príklad.com"
-          contact_url:
-            placeholder: "https://www.example.com/contact-us"
-      corporate:
-        title: "Organizácia"
+          login_required:
+            placeholder: "Súkromné"
+          must_approve_users:
+            placeholder: "Potrebné povolenie"
       styling:
         fields:
           styling_preview:
@@ -1417,6 +1401,10 @@ sk:
                 label: "Iba kategórie"
               categories_and_latest_topics:
                 label: "Kategórie a najnovšie témy"
+      corporate:
+        fields:
+          contact_url:
+            placeholder: "https://www.example.com/contact-us"
       invites:
         title: "Pozvite členov"
   joined: "Vytvorený"

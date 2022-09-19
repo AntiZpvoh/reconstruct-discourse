@@ -1,9 +1,9 @@
 import Controller, { inject as controller } from "@ember/controller";
 import EmberObject, { action } from "@ember/object";
 import I18n from "I18n";
-import bootbox from "bootbox";
-import deprecated from "discourse-common/lib/deprecated";
 import discourseComputed from "discourse-common/utils/decorators";
+import { capitalize } from "@ember/string";
+import { inject as service } from "@ember/service";
 
 const Tab = EmberObject.extend({
   init() {
@@ -18,6 +18,7 @@ const Tab = EmberObject.extend({
 
 export default Controller.extend({
   application: controller(),
+  dialog: service(),
   counts: null,
   showing: "members",
   destroying: null,
@@ -102,7 +103,7 @@ export default Controller.extend({
 
   @discourseComputed("model.displayName", "model.full_name")
   groupName(displayName, fullName) {
-    return (fullName || displayName).capitalize();
+    return capitalize(fullName || displayName);
   },
 
   @discourseComputed("model.messageable")
@@ -140,41 +141,25 @@ export default Controller.extend({
       });
     }
 
-    bootbox.confirm(
+    this.dialog.yesNoConfirm({
       message,
-      I18n.t("no_value"),
-      I18n.t("yes_value"),
-      (confirmed) => {
-        if (confirmed) {
-          model
-            .destroy()
-            .then(() => this.transitionToRoute("groups.index"))
-            .catch((error) => {
-              // eslint-disable-next-line no-console
-              console.error(error);
-              bootbox.alert(I18n.t("admin.groups.delete_failed"));
-            })
-            .finally(() => this.set("destroying", false));
-        } else {
-          this.set("destroying", false);
-        }
-      }
-    );
+      didConfirm: () => {
+        model
+          .destroy()
+          .then(() => this.transitionToRoute("groups.index"))
+          .catch((error) => {
+            // eslint-disable-next-line no-console
+            console.error(error);
+            this.dialog.alert(I18n.t("admin.groups.delete_failed"));
+          })
+          .finally(() => this.set("destroying", false));
+      },
+      didCancel: () => this.set("destroying", false),
+    });
   },
 
   @action
   toggleDeleteTooltip() {
     this.toggleProperty("showTooltip");
-  },
-
-  actions: {
-    destroy() {
-      deprecated("Use `destroyGroup` action instead of `destroy`.", {
-        since: "2.5.0",
-        dropFrom: "2.6.0",
-      });
-
-      this.destroyGroup();
-    },
   },
 });

@@ -30,7 +30,8 @@ class CategoriesController < ApplicationController
       is_homepage: current_homepage == "categories",
       parent_category_id: params[:parent_category_id],
       include_topics: include_topics(parent_category),
-      include_subcategories: include_subcategories
+      include_subcategories: include_subcategories,
+      tag: params[:tag]
     }
 
     @category_list = CategoryList.new(guardian, category_options)
@@ -48,10 +49,14 @@ class CategoriesController < ApplicationController
         style = SiteSetting.desktop_category_page_style
         topic_options = {
           per_page: CategoriesController.topics_per_page,
-          no_definitions: true
+          no_definitions: true,
         }
 
-        if style == "categories_and_latest_topics"
+        if style == "categories_and_latest_topics_created_date"
+          topic_options[:order] = 'created'
+          @topic_list = TopicQuery.new(current_user, topic_options).list_latest
+          @topic_list.more_topics_url = url_for(public_send("latest_path", sort: :created))
+        elsif style == "categories_and_latest_topics"
           @topic_list = TopicQuery.new(current_user, topic_options).list_latest
           @topic_list.more_topics_url = url_for(public_send("latest_path"))
         elsif style == "categories_and_top_topics"
@@ -255,7 +260,12 @@ class CategoriesController < ApplicationController
 
   def visible_groups
     @guardian.ensure_can_see!(@category)
-    render json: success_json.merge(groups: @category.groups.merge(Group.visible_groups(current_user)).pluck("name"))
+
+    groups = if !@category.groups.exists?(id: Group::AUTO_GROUPS[:everyone])
+      @category.groups.merge(Group.visible_groups(current_user)).pluck("name")
+    end
+
+    render json: success_json.merge(groups: groups || [])
   end
 
   private
@@ -279,8 +289,10 @@ class CategoriesController < ApplicationController
 
     topic_options = {
       per_page: CategoriesController.topics_per_page,
-      no_definitions: true
+      no_definitions: true,
     }
+    style = SiteSetting.desktop_category_page_style
+    topic_options[:order] = 'created' if style == "categories_and_latest_topics_created_date"
 
     result = CategoryAndTopicLists.new
     result.category_list = CategoryList.new(guardian, category_options)
@@ -360,7 +372,7 @@ class CategoriesController < ApplicationController
         :read_only_banner,
         :default_list_filter,
         :reviewable_by_group_id,
-        custom_fields: [params[:custom_fields].try(:keys)],
+        custom_fields: [custom_field_params],
         permissions: [*p.try(:keys)],
         allowed_tags: [],
         allowed_tag_groups: [],
@@ -372,6 +384,15 @@ class CategoriesController < ApplicationController
       end
 
       result
+    end
+  end
+
+  def custom_field_params
+    keys = params[:custom_fields].try(:keys)
+    return if keys.blank?
+
+    keys.map do |key|
+      params[:custom_fields][key].is_a?(Array) ? { key => [] } : key
     end
   end
 

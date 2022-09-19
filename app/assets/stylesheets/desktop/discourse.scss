@@ -3,6 +3,10 @@
 // BEWARE: changing these styles implies they take effect anywhere they are seen
 // throughout the Discourse application
 
+:root {
+  --d-max-width: 1110px;
+}
+
 // Base Elements
 body.widget-dragging {
   cursor: ns-resize;
@@ -180,5 +184,18 @@ input {
   .wrap,
   .full-width {
     min-width: 0;
+  }
+}
+
+body.has-sidebar-page {
+  .wrap {
+    // increase page max-width to accommodate sidebar width
+    max-width: calc(var(--d-sidebar-width) + var(--d-max-width));
+  }
+
+  #main-outlet-wrapper {
+    grid-template-columns: var(--d-sidebar-width) minmax(0, 1fr);
+    gap: 0 1em;
+    padding-left: 0;
   }
 }

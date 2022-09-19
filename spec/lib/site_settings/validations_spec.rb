@@ -2,10 +2,10 @@
 
 require 'site_settings/validations'
 
-describe SiteSettings::Validations do
+RSpec.describe SiteSettings::Validations do
   subject { Class.new.include(described_class).new }
 
-  context "default_categories" do
+  describe "default_categories" do
     fab!(:category) { Fabricate(:category) }
 
     it "supports valid categories" do
@@ -31,7 +31,7 @@ describe SiteSettings::Validations do
     end
   end
 
-  context "s3 buckets reusage" do
+  describe "s3 buckets reusage" do
     let(:error_message) { I18n.t("errors.site_settings.s3_bucket_reused") }
 
     shared_examples "s3 bucket validation" do
@@ -308,7 +308,7 @@ describe SiteSettings::Validations do
     end
   end
 
-  context "slow_down_crawler_user_agents" do
+  describe "slow_down_crawler_user_agents" do
     let(:too_short_message) do
       I18n.t(
         "errors.site_settings.slow_down_crawler_user_agent_must_be_at_least_3_characters"
@@ -366,6 +366,52 @@ describe SiteSettings::Validations do
       expect {
         subject.validate_slow_down_crawler_user_agents("html|badcrawler")
       }.to raise_error(Discourse::InvalidParameters, popular_browser_message)
+    end
+  end
+
+  describe "strip image metadata and composer media optimization interplay" do
+    describe "#validate_strip_image_metadata" do
+      let(:error_message) { I18n.t("errors.site_settings.strip_image_metadata_cannot_be_disabled_if_composer_media_optimization_image_enabled") }
+
+      context "when the new value is false" do
+        context "when composer_media_optimization_image_enabled is enabled" do
+          before do
+            SiteSetting.composer_media_optimization_image_enabled = true
+          end
+
+          it "should raise an error" do
+            expect { subject.validate_strip_image_metadata("f") }.to raise_error(Discourse::InvalidParameters, error_message)
+          end
+        end
+
+        context "when composer_media_optimization_image_enabled is disabled" do
+          before do
+            SiteSetting.composer_media_optimization_image_enabled = false
+          end
+
+          it "should be ok" do
+            expect { subject.validate_strip_image_metadata("f") }.not_to raise_error
+          end
+        end
+      end
+
+      context "when the new value is true" do
+        it "should be ok" do
+          expect { subject.validate_strip_image_metadata("t") }.not_to raise_error
+        end
+      end
+    end
+  end
+
+  describe "#twitter_summary_large_image" do
+    it "does not allow SVG image files" do
+      upload = Fabricate(:upload, url: '/images/logo-dark.svg', extension: "svg")
+      expect { subject.validate_twitter_summary_large_image(upload.id) }.to raise_error(
+        Discourse::InvalidParameters, I18n.t("errors.site_settings.twitter_summary_large_image_no_svg")
+      )
+      upload.update!(url: '/images/logo-dark.png', extension: 'png')
+      expect { subject.validate_twitter_summary_large_image(upload.id) }.not_to raise_error
+      expect { subject.validate_twitter_summary_large_image(nil) }.not_to raise_error
     end
   end
 end

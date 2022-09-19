@@ -413,15 +413,9 @@ class TopicView
   end
 
   def bookmarks
-    if SiteSetting.use_polymorphic_bookmarks
-      @bookmarks ||= Bookmark.for_user_in_topic(@user, @topic.id).select(
-        :id, :bookmarkable_id, :bookmarkable_type, :reminder_at, :name, :auto_delete_preference
-      )
-    else
-      @bookmarks ||= @topic.bookmarks.where(user: @user).joins(:topic).select(
-        :id, :post_id, "topics.id AS topic_id", :for_topic, :reminder_at, :name, :auto_delete_preference
-      )
-    end
+    @bookmarks ||= Bookmark.for_user_in_topic(@user, @topic.id).select(
+      :id, :bookmarkable_id, :bookmarkable_type, :reminder_at, :name, :auto_delete_preference
+    )
   end
 
   MAX_PARTICIPANTS = 24
@@ -765,6 +759,8 @@ class TopicView
         :topic,
         :image_upload
       )
+
+    @posts = @posts.includes({ user: :user_status }) if SiteSetting.enable_user_status
 
     @posts = apply_default_scope(@posts)
     @posts = filter_post_types(@posts)

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
-describe UserNotifications do
-
+RSpec.describe UserNotifications do
   let(:user) { Fabricate(:admin) }
 
   describe "#get_context_posts" do
@@ -50,11 +49,9 @@ describe UserNotifications do
       SiteSetting.private_email = true
       expect(UserNotifications.get_context_posts(post3, topic_user, user).count).to eq(0)
     end
-
   end
 
   describe ".signup" do
-
     subject { UserNotifications.signup(user) }
 
     it "works" do
@@ -63,11 +60,9 @@ describe UserNotifications do
       expect(subject.from).to eq([SiteSetting.notification_email])
       expect(subject.body).to be_present
     end
-
   end
 
   describe ".forgot_password" do
-
     subject { UserNotifications.forgot_password(user) }
 
     it "works" do
@@ -141,7 +136,6 @@ describe UserNotifications do
   end
 
   describe '.digest' do
-
     subject { UserNotifications.digest(user) }
 
     after do
@@ -149,7 +143,6 @@ describe UserNotifications do
     end
 
     context "without new topics" do
-
       it "doesn't send the email" do
         expect(subject.to).to be_blank
       end
@@ -169,7 +162,6 @@ describe UserNotifications do
     end
 
     context "with new topics" do
-
       let!(:popular_topic) { Fabricate(:topic, user: Fabricate(:coding_horror), created_at: 1.hour.ago) }
 
       it "works" do
@@ -299,7 +291,6 @@ describe UserNotifications do
         expect(html).to match(' xml:lang="pl-PL"')
       end
     end
-
   end
 
   describe '.user_replied' do
@@ -594,7 +585,7 @@ describe UserNotifications do
       group2 = Fabricate(:group, name: "group2")
 
       user1 = Fabricate(:user, username: "one", groups: [group1, group2])
-      user2 = Fabricate(:user, username: "two", groups: [group1])
+      user2 = Fabricate(:user, username: "two", groups: [group1], staged: true)
 
       topic.allowed_users = [user, user1, user2]
       topic.allowed_groups = [group1, group2]
@@ -606,7 +597,7 @@ describe UserNotifications do
         notification_data_hash: notification.data_hash
       )
 
-      expect(mail.body).to include("[group1 (2)](http://test.localhost/groups/group1), [group2 (1)](http://test.localhost/groups/group2), [one](http://test.localhost/u/one), [two](http://test.localhost/u/two)")
+      expect(mail.body).to include("[group1 (2)](http://test.localhost/g/group1), [group2 (1)](http://test.localhost/g/group2), [one](http://test.localhost/u/one), [two](http://test.localhost/u/two)")
     end
 
     context "when SiteSetting.group_name_in_subject is true" do
@@ -638,7 +629,7 @@ describe UserNotifications do
         end
       end
 
-      context "one group in pm" do
+      context "with one group in pm" do
         before do
           topic.allowed_groups = [group]
         end
@@ -646,7 +637,7 @@ describe UserNotifications do
         include_examples "includes first group name"
       end
 
-      context "multiple groups in pm" do
+      context "with multiple groups in pm" do
         let(:group2) { Fabricate(:group) }
 
         before do
@@ -656,7 +647,7 @@ describe UserNotifications do
         include_examples "includes first group name"
       end
 
-      context "no groups in pm" do
+      context "with no groups in pm" do
         it "includes %{optional_pm} in subject" do
           expect(mail.subject).to include("[PM] ")
         end
@@ -749,7 +740,7 @@ describe UserNotifications do
   end
 
   shared_examples "supports reply by email" do
-    context "reply_by_email" do
+    context "with reply_by_email" do
       it "should have allow_reply_by_email set when that feature is enabled" do
         expects_build_with(has_entry(:allow_reply_by_email, true))
       end
@@ -757,7 +748,7 @@ describe UserNotifications do
   end
 
   shared_examples "no reply by email" do
-    context "reply_by_email" do
+    context "with reply_by_email" do
       it "doesn't support reply by email" do
         expects_build_with(Not(has_entry(:allow_reply_by_email, true)))
       end
@@ -765,7 +756,7 @@ describe UserNotifications do
   end
 
   shared_examples "respect for private_email" do
-    context "private_email" do
+    context "with private_email" do
       it "doesn't support reply by email" do
         SiteSetting.private_email = true
 
@@ -789,7 +780,7 @@ describe UserNotifications do
 
   # The parts of emails that are derived from templates are translated
   shared_examples "sets user locale" do
-    context "set locale for translating templates" do
+    context "with set locale for translating templates" do
       it "sets the locale" do
         expects_build_with(has_key(:locale))
       end
@@ -992,7 +983,7 @@ describe UserNotifications do
       include_examples "sets user locale"
     end
 
-    context "shows the right name in 'From' field" do
+    context "when showing the right name in 'From' field" do
       let(:inviter) { Fabricate(:user) }
       let(:invitee) { Fabricate(:user) }
 
@@ -1043,22 +1034,21 @@ describe UserNotifications do
   end
 
   # notification emails derived from templates are translated into the user's locale
-  shared_context "notification derived from template" do
+  shared_context "with notification derived from template" do
     let(:user) { Fabricate(:user, locale: locale) }
     let(:mail_type) { mail_type }
     let(:notification) { Fabricate(:notification, user: user) }
   end
 
   describe "notifications from template" do
-
-    context "user locale is allowed" do
+    context "when user locale is allowed" do
       before do
         SiteSetting.allow_user_locale = true
       end
 
       %w(signup signup_after_approval confirm_old_email notify_old_email confirm_new_email
          forgot_password admin_login account_created).each do |mail_type|
-        include_examples "notification derived from template" do
+        include_examples "with notification derived from template" do
           let(:locale) { "fr" }
           let(:mail_type) { mail_type }
           it "sets the locale" do
@@ -1068,14 +1058,14 @@ describe UserNotifications do
       end
     end
 
-    context "user locale is not allowed" do
+    context "when user locale is not allowed" do
       before do
         SiteSetting.allow_user_locale = false
       end
 
       %w(signup signup_after_approval notify_old_email confirm_old_email confirm_new_email
          forgot_password admin_login account_created).each do |mail_type|
-        include_examples "notification derived from template" do
+        include_examples "with notification derived from template" do
           let(:locale) { "fr" }
           let(:mail_type) { mail_type }
           it "sets the locale" do
@@ -1085,5 +1075,167 @@ describe UserNotifications do
       end
     end
 
+  end
+
+  describe "#participants" do
+    fab!(:group1) { Fabricate(:group, name: "group1") }
+    fab!(:group2) { Fabricate(:group, name: "group2") }
+    fab!(:group3) { Fabricate(:group, name: "group3") }
+    fab!(:user1) { Fabricate(:user, username: "one", name: nil, groups: [group1, group2]) }
+    fab!(:user2) { Fabricate(:user, username: "two", name: nil, groups: [group1]) }
+    fab!(:user3) { Fabricate(:user, username: "three", name: nil, groups: [group3]) }
+    fab!(:user4) { Fabricate(:user, username: "four", name: nil, groups: [group1, group3]) }
+    fab!(:admin) { Fabricate(:admin, username: "admin", name: nil) }
+
+    fab!(:topic) do
+      t = Fabricate(:private_message_topic, title: "Super cool topic")
+      t.allowed_users = [user1, user2, user3, user4, admin]
+      t.allowed_groups = [group1]
+      t
+    end
+    fab!(:posts) do
+      [
+        Fabricate(:post, topic: topic, post_number: 1, user: user2),
+        Fabricate(:post, topic: topic, post_number: 2, user: user1),
+        Fabricate(:post, topic: topic, post_number: 3, user: user2),
+        Fabricate(:small_action, topic: topic, post_number: 4, user: admin),
+        Fabricate(:post, topic: topic, post_number: 5, user: user4),
+        Fabricate(:post, topic: topic, post_number: 6, user: user3),
+        Fabricate(:post, topic: topic, post_number: 7, user: user4)
+      ]
+    end
+
+    it "returns a list of participants (except for the recipient), groups first, followed by users in order of their last reply" do
+      expect(UserNotifications.participants(posts.last, user3)).to eq("[group1 (3)](http://test.localhost/g/group1), " \
+        "[four](http://test.localhost/u/four), [two](http://test.localhost/u/two), [one](http://test.localhost/u/one), " \
+        "[admin](http://test.localhost/u/admin)")
+    end
+
+    it "caps the list according to site setting" do
+      SiteSetting.max_participant_names = 3
+      list = "[group1 (3)](http://test.localhost/g/group1), [four](http://test.localhost/u/four), [two](http://test.localhost/u/two)"
+      expect(UserNotifications.participants(posts.last, user3)).to eq(I18n.t("user_notifications.more_pm_participants", participants: list, count: 2))
+    end
+
+    it "orders groups by user count" do
+      SiteSetting.max_participant_names = 3
+      topic.allowed_groups = [group1, group2, group3]
+
+      list = "[group1 (3)](http://test.localhost/g/group1), [group3 (2)](http://test.localhost/g/group3), [group2 (1)](http://test.localhost/g/group2)"
+      expect(UserNotifications.participants(posts.last, user3)).to eq(I18n.t("user_notifications.more_pm_participants", participants: list, count: 4))
+    end
+
+    it "orders users by their last reply and user id" do
+      expect(UserNotifications.participants(posts[-3], user4)).to eq("[group1 (3)](http://test.localhost/g/group1), " \
+        "[two](http://test.localhost/u/two), [one](http://test.localhost/u/one), [three](http://test.localhost/u/three), " \
+        "[admin](http://test.localhost/u/admin)")
+    end
+
+    it "prefers full group names when available" do
+      SiteSetting.max_participant_names = 2
+      topic.allowed_groups = [group1, group2]
+
+      group2.update!(full_name: "Awesome Group")
+
+      list = "[group1 (3)](http://test.localhost/g/group1), [Awesome Group (1)](http://test.localhost/g/group2)"
+      expect(UserNotifications.participants(posts.last, user3)).to eq(I18n.t("user_notifications.more_pm_participants", participants: list, count: 4))
+    end
+
+    it "always uses usernames when prioritize_username_in_ux is enabled" do
+      user4.update!(name: "James Bond")
+      user1.update!(name: "Indiana Jones")
+
+      SiteSetting.prioritize_username_in_ux = true
+      expect(UserNotifications.participants(posts.last, user3)).to eq("[group1 (3)](http://test.localhost/g/group1), " \
+        "[four](http://test.localhost/u/four), [two](http://test.localhost/u/two), [one](http://test.localhost/u/one), " \
+        "[admin](http://test.localhost/u/admin)")
+
+      SiteSetting.prioritize_username_in_ux = false
+      expect(UserNotifications.participants(posts.last, user3)).to eq("[group1 (3)](http://test.localhost/g/group1), " \
+        "[James Bond](http://test.localhost/u/four), [two](http://test.localhost/u/two), [Indiana Jones](http://test.localhost/u/one), " \
+        "[admin](http://test.localhost/u/admin)")
+    end
+
+    it "reveals the email address of staged users if enabled" do
+      user4.update!(staged: true, email: "james.bond@mi6.invalid")
+      user1.update!(staged: true, email: "indiana.jones@example.com")
+
+      SiteSetting.prioritize_username_in_ux = true
+      expect(UserNotifications.participants(posts.last, user3, reveal_staged_email: true)).to eq( \
+        "[group1 (3)](http://test.localhost/g/group1), james.bond@mi6.invalid, [two](http://test.localhost/u/two), " \
+        "indiana.jones@example.com, [admin](http://test.localhost/u/admin)")
+    end
+
+    it "does only include human users" do
+      topic.allowed_users << Discourse.system_user
+
+      expect(UserNotifications.participants(posts.last, user3)).to eq("[group1 (3)](http://test.localhost/g/group1), " \
+        "[four](http://test.localhost/u/four), [two](http://test.localhost/u/two), [one](http://test.localhost/u/one), " \
+        "[admin](http://test.localhost/u/admin)")
+    end
+  end
+
+  describe ".account_silenced" do
+    fab!(:user_history) { Fabricate(:user_history, action: UserHistory.actions[:silence_user]) }
+
+    it "adds the silenced_till date in user's timezone" do
+      user.user_option.timezone = "Asia/Tbilisi" # GMT+4
+      user.silenced_till = DateTime.parse("May 25, 2020, 12:00pm")
+
+      mail = UserNotifications.account_silenced(user, { user_history: user_history })
+
+      expect(mail.body).to include("May 25, 2020,  4:00pm")
+    end
+
+    context "when user doesn't have timezone set" do
+      before do
+        user.user_option.timezone = nil
+      end
+
+      it "doesn't raise error" do
+        expect { UserNotifications.account_silenced(user) }.not_to raise_error
+      end
+
+      it "adds the silenced_till date in UTC" do
+        date = "May 25, 2020, 12:00pm"
+        user.silenced_till = DateTime.parse(date)
+
+        mail = UserNotifications.account_silenced(user, { user_history: user_history })
+
+        expect(mail.body).to include(date)
+      end
+    end
+  end
+
+  describe ".account_suspended" do
+    fab!(:user_history) { Fabricate(:user_history, action: UserHistory.actions[:suspend_user]) }
+
+    it "adds the suspended_till date in user's timezone" do
+      user.user_option.timezone = "Asia/Tbilisi" # GMT+4
+      user.suspended_till = DateTime.parse("May 25, 2020, 12:00pm")
+
+      mail = UserNotifications.account_suspended(user, { user_history: user_history })
+
+      expect(mail.body).to include("May 25, 2020,  4:00pm")
+    end
+
+    context "when user doesn't have timezone set" do
+      before do
+        user.user_option.timezone = nil
+      end
+
+      it "doesn't raise error" do
+        expect { UserNotifications.account_suspended(user) }.not_to raise_error
+      end
+
+      it "adds the suspended_till date in UTC" do
+        date = "May 25, 2020, 12:00pm"
+        user.suspended_till = DateTime.parse(date)
+
+        mail = UserNotifications.account_suspended(user, { user_history: user_history })
+
+        expect(mail.body).to include(date)
+      end
+    end
   end
 end

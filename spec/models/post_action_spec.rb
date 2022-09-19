@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe PostAction do
+RSpec.describe PostAction do
   it { is_expected.to rate_limit }
 
   fab!(:moderator) { Fabricate(:moderator) }
@@ -9,7 +9,6 @@ describe PostAction do
   fab!(:admin) { Fabricate(:admin) }
   fab!(:post) { Fabricate(:post) }
   fab!(:second_post) { Fabricate(:post, topic: post.topic) }
-  let(:bookmark) { PostAction.new(user_id: post.user_id, post_action_type_id: PostActionType.types[:bookmark] , post_id: post.id) }
 
   def value_for(user_id, dt)
     GivenDailyLike.find_for(user_id, dt).pluck(:likes_given)[0] || 0
@@ -21,8 +20,7 @@ describe PostAction do
     expect(pa).not_to be_valid
   end
 
-  context "messaging" do
-
+  describe "messaging" do
     it "notifies moderators (integration test)" do
       post = create_post
       mod = moderator
@@ -89,7 +87,7 @@ describe PostAction do
       expect(topic.message_archived?(mod)).to eq(true)
     end
 
-    context "category group moderators" do
+    context "with category group moderators" do
       fab!(:group_user) { Fabricate(:group_user) }
       let(:group) { group_user.group }
 
@@ -110,7 +108,6 @@ describe PostAction do
         expect(readable_by_groups).to include(group.id)
       end
     end
-
   end
 
   describe "update_counters" do
@@ -131,31 +128,6 @@ describe PostAction do
 
       tu = TopicUser.get(post.topic, codinghorror)
       expect(tu.liked).to be true
-      expect(tu.bookmarked).to be false
-    end
-
-  end
-
-  describe "when a user bookmarks something" do
-    it "increases the post's bookmark count when saved" do
-      expect { bookmark.save; post.reload }.to change(post, :bookmark_count).by(1)
-    end
-
-    describe 'when deleted' do
-
-      before do
-        bookmark.save
-        post.reload
-        @topic = post.topic
-        @topic.reload
-        bookmark.deleted_at = DateTime.now
-        bookmark.save
-      end
-
-      it 'reduces the bookmark count of the post' do
-        expect { post.reload }.to change(post, :bookmark_count).by(-1)
-      end
-
     end
   end
 
@@ -705,7 +677,7 @@ describe PostAction do
       expect(post.hidden).to eq(false)
     end
 
-    context "topic auto closing" do
+    context "with topic auto closing" do
       fab!(:topic) { Fabricate(:topic) }
       let(:post1) { create_post(topic: topic) }
       let(:post2) { create_post(topic: topic) }
@@ -761,7 +733,7 @@ describe PostAction do
         expect(topic_status_update.status_type).to eq(TopicTimer.types[:open])
       end
 
-      context "on a staff post" do
+      context "when on a staff post" do
         fab!(:staff_user) { Fabricate(:user, moderator: true) }
         fab!(:topic) { Fabricate(:topic, user: staff_user) }
 
@@ -879,7 +851,7 @@ describe PostAction do
   describe ".lookup_for" do
     it "returns the correct map" do
       user = Fabricate(:user)
-      post_action = PostActionCreator.create(user, post, :bookmark).post_action
+      post_action = PostActionCreator.create(user, post, :like).post_action
       map = PostAction.lookup_for(user, [post.topic], post_action.post_action_type_id)
 
       expect(map).to eq(post.topic_id => [post.post_number])
@@ -1014,7 +986,7 @@ describe PostAction do
       expect(event).to be_present
     end
 
-    context "resolving flags" do
+    context "when resolving flags" do
       let(:result) { PostActionCreator.spam(eviltrout, post) }
       let(:post_action) { result.post_action }
       let(:reviewable) { result.reviewable }

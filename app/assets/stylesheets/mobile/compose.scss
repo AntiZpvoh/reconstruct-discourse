@@ -161,12 +161,10 @@
     }
   }
 
-  .d-editor-button-bar {
-    display: none;
-  }
-
-  .toolbar-visible .d-editor-button-bar {
-    display: flex;
+  .wmd-controls:not(.toolbar-visible) {
+    .d-editor-button-bar {
+      display: none;
+    }
   }
 
   .d-editor-button-bar .btn {
@@ -203,7 +201,7 @@
       }
     }
 
-    .formated-selection {
+    .formatted-selection {
       font-size: var(--font-down-1);
     }
   }

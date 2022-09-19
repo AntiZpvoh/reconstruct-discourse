@@ -4,6 +4,13 @@ class ThemeField < ActiveRecord::Base
 
   belongs_to :upload
   has_one :javascript_cache, dependent: :destroy
+  has_one :upload_reference, as: :target, dependent: :destroy
+
+  after_save do
+    if self.type_id == ThemeField.types[:theme_upload_var] && saved_change_to_upload_id?
+      UploadReference.ensure_exist!(upload_ids: [self.upload_id], target: self)
+    end
+  end
 
   scope :find_by_theme_ids, ->(theme_ids) {
     return none unless theme_ids.present?
@@ -85,7 +92,7 @@ class ThemeField < ActiveRecord::Base
         if is_raw
           js_compiler.append_raw_template(name, hbs_template)
         else
-          js_compiler.append_ember_template(name, hbs_template)
+          js_compiler.append_ember_template("discourse/templates/#{name}", hbs_template)
         end
       rescue ThemeJavascriptCompiler::CompileError => ex
         errors << ex.message
@@ -142,7 +149,7 @@ class ThemeField < ActiveRecord::Base
     javascript_cache.content = js_compiler.content
     javascript_cache.save!
 
-    doc.add_child("<script src='#{javascript_cache.url}' data-theme-id='#{theme_id}'></script>") if javascript_cache.content.present?
+    doc.add_child("<script defer src='#{javascript_cache.url}' data-theme-id='#{theme_id}'></script>") if javascript_cache.content.present?
     [doc.to_s, errors&.join("\n")]
   end
 
@@ -157,7 +164,7 @@ class ThemeField < ActiveRecord::Base
       when "js.es6", "js"
         js_compiler.append_module(content, filename, include_variables: true)
       when "hbs"
-        js_compiler.append_ember_template(filename.sub("discourse/templates/", ""), content)
+        js_compiler.append_ember_template(filename, content)
       when "hbr", "raw.hbs"
         js_compiler.append_raw_template(filename.sub("discourse/templates/", ""), content)
       else
@@ -258,7 +265,7 @@ class ThemeField < ActiveRecord::Base
     javascript_cache.content = js_compiler.content
     javascript_cache.save!
     doc = ""
-    doc = "<script src='#{javascript_cache.url}' data-theme-id='#{theme_id}'></script>" if javascript_cache.content.present?
+    doc = "<script defer src='#{javascript_cache.url}' data-theme-id='#{theme_id}'></script>" if javascript_cache.content.present?
     [doc, errors&.join("\n")]
   end
 
@@ -578,12 +585,6 @@ class ThemeField < ActiveRecord::Base
 
   after_save do
     dependent_fields.each(&:invalidate_baked!)
-  end
-
-  after_commit do
-    # TODO message for mobile vs desktop
-    MessageBus.publish "/header-change/#{theme.id}", self.value if theme && self.name == "header"
-    MessageBus.publish "/footer-change/#{theme.id}", self.value if theme && self.name == "footer"
   end
 
   after_destroy do

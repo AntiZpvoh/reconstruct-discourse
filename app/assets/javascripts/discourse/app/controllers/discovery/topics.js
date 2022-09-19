@@ -24,6 +24,13 @@ const controllerOpts = {
   showTopicPostBadges: not("new"),
   redirectedReason: alias("currentUser.redirected_to_top.reason"),
 
+  @discourseComputed("model.filter", "site.show_welcome_topic_banner")
+  showEditWelcomeTopicBanner(filter, showWelcomeTopicBanner) {
+    return (
+      this.currentUser?.staff && filter === "latest" && showWelcomeTopicBanner
+    );
+  },
+
   expandGloballyPinned: false,
   expandAllPinned: false,
 
@@ -36,11 +43,13 @@ const controllerOpts = {
   // We want them to bubble in DiscoveryTopicsController
   @action
   loadingBegan() {
+    this.set("application.showFooter", false);
     return true;
   },
 
   @action
   loadingComplete() {
+    this.set("application.showFooter", this.loadedAllItems);
     return true;
   },
 

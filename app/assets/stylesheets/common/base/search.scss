@@ -134,7 +134,7 @@
   .user-items {
     display: grid;
     gap: 2em 1em;
-    grid: auto-flow / repeat(4, 1fr);
+    grid: auto-flow / repeat(4, minmax(0, 1fr));
 
     @include breakpoint(medium) {
       grid: auto-flow / repeat(3, 1fr);
@@ -157,14 +157,21 @@
     details.advanced-filters,
     details.search-advanced-additional-options {
       margin-top: 1em;
-
       > summary {
         color: var(--tertiary);
         cursor: pointer;
+        padding-top: 0.25em;
+        padding-bottom: 0.25em;
+        &:focus-visible {
+          background-color: var(--tertiary-very-low);
+        }
       }
       &[open] > summary {
         color: var(--primary);
         margin-bottom: 1em;
+        &:focus-visible {
+          background-color: var(--tertiary-very-low);
+        }
       }
     }
 
@@ -372,11 +379,13 @@
     .avatar {
       margin-right: 0.5em;
       min-width: 25px;
+      flex: 0 0 auto;
     }
     .user-titles {
       display: flex;
       flex-direction: column;
       max-width: 300px;
+      overflow: hidden;
       .name {
         color: var(--primary-high-or-secondary-low);
         font-size: var(--font-0);

@@ -22,11 +22,12 @@ Discourse::Application.routes.draw do
     post "webhooks/mailgun"  => "webhooks#mailgun"
     post "webhooks/mailjet"  => "webhooks#mailjet"
     post "webhooks/mandrill" => "webhooks#mandrill"
+    get "webhooks/mandrill" => "webhooks#mandrill_head"
     post "webhooks/postmark" => "webhooks#postmark"
     post "webhooks/sendgrid" => "webhooks#sendgrid"
     post "webhooks/sparkpost" => "webhooks#sparkpost"
 
-    scope path: nil, constraints: { format: :xml } do
+    scope path: nil, format: true, constraints: { format: :xml } do
       resources :sitemap, only: [:index]
       get "/sitemap_:page" => "sitemap#page", page: /[1-9][0-9]*/
       get "/sitemap_recent" => "sitemap#recent"
@@ -358,6 +359,7 @@ Discourse::Application.routes.draw do
     get "review/count" => "reviewables#count"
     get "review/topics" => "reviewables#topics"
     get "review/settings" => "reviewables#settings"
+    get "review/user-menu-list" => "reviewables#user_menu_list", format: :json
     put "review/settings" => "reviewables#settings"
     put "review/:reviewable_id/perform/:action_id" => "reviewables#perform", constraints: {
       reviewable_id: /\d+/,
@@ -383,6 +385,7 @@ Discourse::Application.routes.draw do
     if Rails.env.test?
       post "session/2fa/test-action" => "session#test_second_factor_restricted_route"
     end
+    get "session/scopes" => "session#scopes"
     get "composer_messages" => "composer_messages#index"
 
     resources :static
@@ -487,6 +490,7 @@ Discourse::Application.routes.draw do
       get "#{root_path}/:username/preferences/users" => "users#preferences", constraints: { username: RouteFormat.username }
       get "#{root_path}/:username/preferences/tags" => "users#preferences", constraints: { username: RouteFormat.username }
       get "#{root_path}/:username/preferences/interface" => "users#preferences", constraints: { username: RouteFormat.username }
+      get "#{root_path}/:username/preferences/sidebar" => "users#preferences", constraints: { username: RouteFormat.username }
       get "#{root_path}/:username/preferences/apps" => "users#preferences", constraints: { username: RouteFormat.username }
       post "#{root_path}/:username/preferences/email" => "users_email#create", constraints: { username: RouteFormat.username }
       put "#{root_path}/:username/preferences/email" => "users_email#update", constraints: { username: RouteFormat.username }
@@ -515,6 +519,8 @@ Discourse::Application.routes.draw do
       get "#{root_path}/:username/activity/:filter" => "users#show", constraints: { username: RouteFormat.username }
       get "#{root_path}/:username/badges" => "users#badges", constraints: { username: RouteFormat.username }
       get "#{root_path}/:username/bookmarks" => "users#bookmarks", constraints: { username: RouteFormat.username, format: /(json|ics)/ }
+      get "#{root_path}/:username/user-menu-bookmarks" => "users#user_menu_bookmarks", constraints: { username: RouteFormat.username, format: :json }
+      get "#{root_path}/:username/user-menu-private-messages" => "users#user_menu_messages", constraints: { username: RouteFormat.username, format: :json }
       get "#{root_path}/:username/notifications" => "users#show", constraints: { username: RouteFormat.username }
       get "#{root_path}/:username/notifications/:filter" => "users#show", constraints: { username: RouteFormat.username }
       delete "#{root_path}/:username" => "users#destroy", constraints: { username: RouteFormat.username }
@@ -822,8 +828,8 @@ Discourse::Application.routes.draw do
 
     # Topic routes
     get "t/id_for/:slug" => "topics#id_for_slug"
-    get "t/external_id/:external_id" => "topics#show_by_external_id", format: :json, constrains: { external_id: /\A[\w-]+\z/ }
-    get "t/:slug/:topic_id/print" => "topics#show", format: :html, print: true, constraints: { topic_id: /\d+/ }
+    get "t/external_id/:external_id" => "topics#show_by_external_id", format: :json, constraints: { external_id: /[\w-]+/ }
+    get "t/:slug/:topic_id/print" => "topics#show", format: :html, print: 'true', constraints: { topic_id: /\d+/ }
     get "t/:slug/:topic_id/wordpress" => "topics#wordpress", constraints: { topic_id: /\d+/ }
     get "t/:topic_id/wordpress" => "topics#wordpress", constraints: { topic_id: /\d+/ }
     get "t/:slug/:topic_id/moderator-liked" => "topics#moderator_liked", constraints: { topic_id: /\d+/ }
@@ -1000,10 +1006,6 @@ Discourse::Application.routes.draw do
     get "/safe-mode" => "safe_mode#index"
     post "/safe-mode" => "safe_mode#enter", as: "safe_mode_enter"
 
-    unless Rails.env.production?
-      get "/qunit" => "qunit#index"
-      get "/wizard/qunit" => "wizard#qunit"
-    end
     get "/theme-qunit" => "qunit#theme"
 
     post "/push_notifications/subscribe" => "push_notification#subscribe"
@@ -1018,6 +1020,9 @@ Discourse::Application.routes.draw do
 
     post "/presence/update" => "presence#update"
     get "/presence/get" => "presence#get"
+
+    put "user-status" => "user_status#set"
+    delete "user-status" => "user_status#clear"
 
     get "*url", to: 'permalinks#show', constraints: PermalinkConstraint.new
   end

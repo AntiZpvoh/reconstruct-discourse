@@ -12,6 +12,7 @@ import { on } from "@ember/object/evented";
 import { schedule } from "@ember/runloop";
 import { topicTitleDecorators } from "discourse/components/topic-title";
 import { wantsNewWindow } from "discourse/lib/intercept-click";
+import { htmlSafe } from "@ember/template";
 
 export function showEntrance(e) {
   let target = $(e.target);
@@ -55,7 +56,7 @@ export default Component.extend({
     if (template) {
       this.set(
         "topicListItemContents",
-        template(this, RUNTIME_OPTIONS).htmlSafe()
+        htmlSafe(template(this, RUNTIME_OPTIONS))
       );
       schedule("afterRender", () => {
         if (this.selected && this.selected.includes(this.topic)) {
@@ -81,11 +82,7 @@ export default Component.extend({
           `.indicator-topic-${data.topic_id}`
         ).classList;
 
-        if (data.show_indicator) {
-          nodeClassList.remove("read");
-        } else {
-          nodeClassList.add("read");
-        }
+        nodeClassList.toggle("read", !data.show_indicator);
       });
     }
 
@@ -94,8 +91,7 @@ export default Component.extend({
         const rawTopicLink = this.element.querySelector(".raw-topic-link");
 
         rawTopicLink &&
-          topicTitleDecorators &&
-          topicTitleDecorators.forEach((cb) =>
+          topicTitleDecorators?.forEach((cb) =>
             cb(this.topic, rawTopicLink, "topic-list-item-title")
           );
       }
@@ -262,7 +258,8 @@ export default Component.extend({
     if (
       this.site.mobileView &&
       (e.target.classList.contains("right") ||
-        e.target.classList.contains("topic-item-stats"))
+        e.target.classList.contains("topic-item-stats") ||
+        e.target.classList.contains("main-link"))
     ) {
       if (wantsNewWindow(e)) {
         return true;

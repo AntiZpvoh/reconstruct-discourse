@@ -22,6 +22,7 @@ import { popupAjaxError } from "discourse/lib/ajax-error";
 import { resolveShareUrl } from "discourse/helpers/share-url";
 import DiscourseURL, { userPath } from "discourse/lib/url";
 import deprecated from "discourse-common/lib/deprecated";
+import { applyModelTransformations } from "discourse/lib/model-transformers";
 
 export function loadTopicView(topic, args) {
   const data = deepMerge({}, args);
@@ -61,15 +62,14 @@ const Topic = RestModel.extend({
   @discourseComputed("posters.[]")
   lastPoster(posters) {
     if (posters && posters.length > 0) {
-      const latest = posters.filter(
-        (p) => p.extras && p.extras.indexOf("latest") >= 0
-      )[0];
+      const latest = posters.filter((p) => p.extras?.includes("latest"))[0];
       return latest || posters.firstObject;
     }
   },
 
   lastPosterUser: alias("lastPoster.user"),
   lastPosterGroup: alias("lastPoster.primary_group"),
+  allowedGroups: alias("details.allowed_groups"),
 
   @discourseComputed("posters.[]", "participants.[]", "allowed_user_count")
   featuredUsers(posters, participants, allowedUserCount) {
@@ -163,7 +163,7 @@ const Topic = RestModel.extend({
     const newTags = [];
 
     tags.forEach(function (tag) {
-      if (title.indexOf(tag.toLowerCase()) === -1) {
+      if (!title.includes(tag.toLowerCase())) {
         newTags.push(tag);
       }
     });
@@ -397,17 +397,7 @@ const Topic = RestModel.extend({
     this.set(
       "bookmarks",
       this.bookmarks.filter((bookmark) => {
-        // TODO (martin) [POLYBOOK] Not relevant once polymorphic bookmarks are implemented.
-        if (
-          (!this.siteSettings.use_polymorphic_bookmarks &&
-            bookmark.id === id &&
-            bookmark.for_topic) ||
-          (this.siteSettings.use_polymorphic_bookmarks &&
-            bookmark.id === id &&
-            bookmark.bookmarkable_type === "Topic")
-        ) {
-          // TODO (martin) (2022-02-01) Remove these old bookmark events, replaced by bookmarks:changed.
-          this.appEvents.trigger("topic:bookmark-toggled");
+        if (bookmark.id === id && bookmark.bookmarkable_type === "Topic") {
           this.appEvents.trigger(
             "bookmarks:changed",
             null,
@@ -425,11 +415,9 @@ const Topic = RestModel.extend({
   clearBookmarks() {
     this.toggleProperty("bookmarked");
 
-    const postIds = this.siteSettings.use_polymorphic_bookmarks
-      ? this.bookmarks
-          .filterBy("bookmarkable_type", "Post")
-          .mapBy("bookmarkable_id")
-      : this.bookmarks.mapBy("post_id");
+    const postIds = this.bookmarks
+      .filterBy("bookmarkable_type", "Post")
+      .mapBy("bookmarkable_id");
     postIds.forEach((postId) => {
       const loadedPost = this.postStream.findLoadedPost(postId);
       if (loadedPost) {
@@ -878,6 +866,10 @@ Topic.reopenClass({
     data.enabled_until = enabledUntil;
 
     return ajax(`/t/${topicId}/slow_mode`, { type: "PUT", data });
+  },
+
+  async applyTransformations(topics) {
+    await applyModelTransformations("topic", topics);
   },
 });
 

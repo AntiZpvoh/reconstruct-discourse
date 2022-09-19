@@ -2,13 +2,19 @@
 
 require 'rails_helper'
 
-describe SitemapController do
+RSpec.describe SitemapController do
   describe 'before_action :check_sitemap_enabled' do
     it 'returns a 404 if sitemap is disabled' do
       Sitemap.touch(Sitemap::RECENT_SITEMAP_NAME)
       SiteSetting.enable_sitemap = false
 
       get '/sitemap.xml'
+
+      expect(response.status).to eq(404)
+    end
+
+    it "returns a 404 if the request does't have a format" do
+      get '/news'
 
       expect(response.status).to eq(404)
     end

@@ -243,7 +243,7 @@ export default RestModel.extend({
     });
   },
 
-  refreshAndJumptoSecondVisible() {
+  refreshAndJumpToSecondVisible() {
     return this.refresh({}).then(() => {
       if (this.posts && this.posts.length > 1) {
         DiscourseURL.jumpToPost(this.posts[1].get("post_number"));
@@ -254,14 +254,14 @@ export default RestModel.extend({
   showSummary() {
     this.cancelFilter();
     this.set("filter", "summary");
-    return this.refreshAndJumptoSecondVisible();
+    return this.refreshAndJumpToSecondVisible();
   },
 
   // Filter the stream to a particular user.
   filterParticipant(username) {
     this.cancelFilter();
     this.userFilters.addObject(username);
-    return this.refreshAndJumptoSecondVisible();
+    return this.refreshAndJumpToSecondVisible();
   },
 
   filterReplies(postNumber, postId) {
@@ -599,6 +599,7 @@ export default RestModel.extend({
   },
 
   prependPost(post) {
+    this._initUserModel(post);
     const stored = this.storePost(post);
     if (stored) {
       const posts = this.posts;
@@ -609,6 +610,7 @@ export default RestModel.extend({
   },
 
   appendPost(post) {
+    this._initUserModel(post);
     const stored = this.storePost(post);
     if (stored) {
       const posts = this.posts;
@@ -714,7 +716,7 @@ export default RestModel.extend({
     let missingIds = [];
 
     postIds.forEach((postId) => {
-      if (postId && this.stream.indexOf(postId) === -1) {
+      if (postId && !this.stream.includes(postId)) {
         missingIds.push(postId);
       }
     });
@@ -725,7 +727,7 @@ export default RestModel.extend({
 
     if (loadedAllPosts) {
       missingIds.forEach((postId) => {
-        if (this._loadingPostIds.indexOf(postId) === -1) {
+        if (!this._loadingPostIds.includes(postId)) {
           this._loadingPostIds.push(postId);
         }
       });
@@ -847,12 +849,12 @@ export default RestModel.extend({
     return resolved;
   },
 
-  triggerLikedPost(postId, likesCount) {
+  triggerLikedPost(postId, likesCount, userID, eventType) {
     const resolved = Promise.resolve();
 
     const post = this.findLoadedPost(postId);
     if (post) {
-      post.updateLikeCount(likesCount);
+      post.updateLikeCount(likesCount, userID, eventType);
       this.storePost(post);
     }
 
@@ -870,6 +872,17 @@ export default RestModel.extend({
     });
 
     return resolved;
+  },
+
+  triggerChangedTopicStats() {
+    if (this.firstPostNotLoaded) {
+      return Promise.reject();
+    }
+
+    return Promise.resolve().then(() => {
+      const firstPost = this.posts.findBy("post_number", 1);
+      return firstPost.id;
+    });
   },
 
   postForPostNumber(postNumber) {
@@ -1226,10 +1239,22 @@ export default RestModel.extend({
 
     const json = error.jqXHR.responseJSON;
     if (json && json.extras && json.extras.html) {
+      topic.set("errorTitle", json.extras.title);
       topic.set("errorHtml", json.extras.html);
     } else {
       topic.set("errorMessage", I18n.t("topic.server_error.description"));
       topic.set("noRetry", error.jqXHR.status === 403);
+    }
+  },
+
+  _initUserModel(post) {
+    post.user = User.create({
+      id: post.user_id,
+      username: post.username,
+    });
+
+    if (post.user_status) {
+      post.user.status = post.user_status;
     }
   },
 

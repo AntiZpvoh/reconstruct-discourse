@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe Middleware::AnonymousCache do
+RSpec.describe Middleware::AnonymousCache do
   let(:middleware) { Middleware::AnonymousCache.new(lambda { |_| [200, {}, []] }) }
 
   def env(opts = {})
@@ -12,7 +12,7 @@ describe Middleware::AnonymousCache do
       Middleware::AnonymousCache::Helper.new(env(opts))
     end
 
-    context "cacheable?" do
+    describe "#cacheable?" do
       it "true by default" do
         expect(new_helper.cacheable?).to eq(true)
       end
@@ -29,6 +29,7 @@ describe Middleware::AnonymousCache do
       it "is true if it has an invalid auth cookie" do
         cookie = create_auth_cookie(token: SecureRandom.hex, issued_at: 5.minutes.ago)
         cookie = swap_2_different_characters(cookie)
+        cookie.prepend("%a0%a1") # an invalid byte sequence
         expect(new_helper("HTTP_COOKIE" => "jack=1; _t=#{cookie}; jill=2").cacheable?).to eq(true)
       end
 
@@ -37,7 +38,7 @@ describe Middleware::AnonymousCache do
       end
     end
 
-    context "per theme cache" do
+    describe "per theme cache" do
       it "handles theme keys" do
         theme = Fabricate(:theme, user_selectable: true)
 
@@ -78,7 +79,21 @@ describe Middleware::AnonymousCache do
       end
     end
 
-    context "cached" do
+    it "handles old browsers" do
+      SiteSetting.browser_update_user_agents = "my_old_browser"
+
+      key1 = new_helper("HTTP_USER_AGENT" => "my_old_browser").cache_key
+      key2 = new_helper("HTTP_USER_AGENT" => "my_new_browser").cache_key
+      expect(key1).not_to eq(key2)
+    end
+
+    it "handles modern mobile browsers" do
+      key1 = new_helper("HTTP_USER_AGENT" => "Safari (iPhone OS 7)").cache_key
+      key2 = new_helper("HTTP_USER_AGENT" => "Safari (iPhone OS 15)").cache_key
+      expect(key1).not_to eq(key2)
+    end
+
+    context "when cached" do
       let!(:helper) do
         new_helper("ANON_CACHE_DURATION" => 10)
       end
@@ -136,7 +151,7 @@ describe Middleware::AnonymousCache do
     end
   end
 
-  context 'background request rate limit' do
+  describe 'background request rate limit' do
     it 'will rate limit background requests' do
 
       app = Middleware::AnonymousCache.new(
@@ -179,7 +194,7 @@ describe Middleware::AnonymousCache do
     end
   end
 
-  context 'force_anonymous!' do
+  describe '#force_anonymous!' do
     before do
       RateLimiter.enable
     end
@@ -245,7 +260,7 @@ describe Middleware::AnonymousCache do
     end
   end
 
-  context 'invalid request payload' do
+  describe 'invalid request payload' do
     it 'returns 413 for GET request with payload' do
       status, headers, _ = middleware.call(env.tap do |environment|
         environment[Rack::RACK_INPUT].write("test")
@@ -256,7 +271,7 @@ describe Middleware::AnonymousCache do
     end
   end
 
-  context "crawler blocking" do
+  describe "crawler blocking" do
     let :non_crawler do
       {
         "HTTP_USER_AGENT" =>
@@ -362,5 +377,4 @@ describe Middleware::AnonymousCache do
       expect(@status).to eq(403)
     end
   end
-
 end

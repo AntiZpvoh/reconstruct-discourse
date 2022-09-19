@@ -214,7 +214,6 @@ pt:
       <p>Se você se lembrar da sua senha, você pode <a href="%{base_url}/login">Efetuar Login</a>.</p>
 
       <p>Caso contrário, <a href="%{base_url}/password-reset">Redefinir senha</a>.</p>
-    user_exists: "Não há necessidade de convidar <b>%{email}</b>, eles <a href='%{base_path}/u/%{username}/summary'>já têm uma conta!</a>"
     invite_exists: "Você já convidou <b>%{email}</b>."
     invalid_email: "%{email} não é um endereço de email válido."
     rate_limit:
@@ -473,16 +472,13 @@ pt:
               invalid_url: "A URL de substituição é inválida"
       <<: *errors
   uncategorized_category_name: "Sem categoria"
-  vip_category_name: "Salão"
-  vip_category_description: "Uma categoria exclusiva para membros de Nível de Confiança 3 ou superior."
+  general_category_name: "Geral"
   meta_category_name: "Comentários sobre o Sítio"
   meta_category_description: "Discussão sobre este sítio, a sua organização, como funciona, e como podemos melhorá-lo."
   staff_category_name: "Pessoal"
   staff_category_description: "Categoria privada para discussões do pessoal. Os tópicos estão apenas visíveis para administradores e moderadores."
   discourse_welcome_topic:
     title: "Bem-vindo ao Discourse"
-  lounge_welcome:
-    title: "Bem-vindo ao Salão"
   category:
     topic_prefix: "Acerca da categoria %{category}"
     post_template: "%{replace_paragraph}\n\nUtilize os seguintes parágrafos para uma descrição mais longa, ou para estabelecer orientações ou regras da categoria:\n\n- Porque devem as pessoas utilizar esta categoria? Para que serve?\n\n- No que difere ao certo em relação às outras categorias que já temos?\n\n- O que devem conter, de maneira geral, os tópicos desta categoria?\n\n- Precisamos desta categoria? Podemos uni-la com outra categoria, ou subcategoria?\n"
@@ -987,7 +983,6 @@ pt:
     title: "O nome deste sítio, tal como usado na etiqueta do título."
     site_description: "Descrever este sítio em uma frase, tal como usado na etiqueta de descrição meta."
     crawl_images: "Recuperar imagens de URLs remotos para inserir o comprimento e largura corretos."
-    download_remote_images_to_local: "Converta as imagens remotas em imagens locais transferindo-as; isto evita imagens corrompidas."
     download_remote_images_threshold: "Espaço mínimo necessário em disco para transferir as imagens remotas localmente (em percentagem)"
     disabled_image_download_domains: "As imagens remotas nunca serão transferidas destes domínios. Lista delimitada por canal."
     editing_grace_period: "Por (n) segundos após publicar, a edição não irá criar uma nova versão no histórico da mensagem."
@@ -1838,6 +1833,7 @@ pt:
     post_approved:
       title: "A sua publicação foi aprovada"
   page_not_found:
+    page_title: "Página Não Encontrada"
     title: "Oops! Essa página não existe or é privada."
     popular_topics: "Popular"
     recent_topics: "Recente"
@@ -2166,7 +2162,6 @@ pt:
     register:
       button: "Registar"
       title: "Registar Conta de Administração"
-      help: "registe uma conta nova para começar"
     confirm_email:
       title: "Confirme o seu Email"
     resend_email:
@@ -2174,57 +2169,24 @@ pt:
       message: "<p>Reenviamos o email de ativação para <b>%{email}</b>"
   safe_mode:
     title: "Entrar em modo de segurança"
-    description: "O modo de segurança permite-lhe testar o seu sítio sem carregar plugins ou alterações."
-    only_official: "Desativar plugins não-oficiais"
+    no_unofficial_plugins: "Desativar plugins não-oficiais"
     no_plugins: "Desativar todos os plugins"
     enter: "Entrar em Modo de Segurança"
   wizard:
     title: "Configuração do Discourse"
     step:
-      locale:
-        title: "Bem-vindo ao seu Discourse!"
-        fields:
-          default_locale:
-            description: "Qual é a linguagem por defeito para a sua comunidade?"
-      forum_title:
-        title: "Nome"
-        description: "O nome é um sinal visível à distância, a primeira coisa que potenciais visitantes verão sobre a sua comunidade. O que é o que seu nome e título dizem sobre a sua comunidade?"
+      introduction:
         fields:
           title:
-            label: "O nome da sua comunidade"
             placeholder: "Reduto da Joana"
           site_description:
             placeholder: "Um lugar para a Jona e os seus amigos falarem de coisas giras"
-      introduction:
-        title: "Introdução"
-        fields:
-          welcome:
-            label: "Tópico de Boas-vindas"
-            one_paragraph: "Por favor limite a sua mensagem de boas-vindas a um paragrafo."
       privacy:
-        title: "Acesso"
         fields:
-          privacy:
-            choices:
-              open:
-                label: "Público"
-              restricted:
-                label: "Privado"
-      contact:
-        title: "Contacte-nos"
-        fields:
-          contact_email:
-            label: "Email"
-            placeholder: "name@example.com"
-            description: "Endereço de email da pessoa ou grupo responsáveis por esta comunidade. Usado para notificações críticas tais como denúncias não tratadas, actualizações de segurança, assim como <a href='%{base_path}/about' target='_blank'>na sua página de descrição</a> para comunicações urgentes com a comunidade."
-          contact_url:
-            label: "Página da Internet"
-            placeholder: "https://www.example.com/contact-us"
-            description: "Página da internet com informação geral sobre si ou a sua organização. Será mostrada na <a href='%{base_path}/about' target='_blank'>sua página de descrição</a>."
-          site_contact:
-            label: "Mensagens Automatizadas"
-      corporate:
-        title: "Organização"
+          login_required:
+            placeholder: "Privado"
+      ready:
+        title: "O seu Discourse está Pronto!"
       styling:
         fields:
           styling_preview:
@@ -2241,16 +2203,20 @@ pt:
                 label: "Categorias e Tópicos Recentes"
               categories_and_top_topics:
                 label: "Categorias e Melhores Tópicos"
-      logos:
-        title: "Logos"
+      branding:
         fields:
           logo:
             label: "Logo Primário"
-      icons:
-        title: "Ícones"
-        fields:
           large_icon:
             label: "Ícone Grande"
+      corporate:
+        fields:
+          contact_url:
+            label: "Página da Internet"
+            placeholder: "https://www.example.com/contact-us"
+            description: "Página da internet com informação geral sobre si ou a sua organização. Será mostrada na <a href='%{base_path}/about' target='_blank'>sua página de descrição</a>."
+          site_contact:
+            label: "Mensagens Automatizadas"
       invites:
         title: "Convidar Equipa de Apoio"
       finished:

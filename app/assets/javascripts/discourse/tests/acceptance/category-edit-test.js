@@ -2,7 +2,7 @@ import {
   acceptance,
   count,
   exists,
-  queryAll,
+  query,
   visible,
 } from "discourse/tests/helpers/qunit-helpers";
 import { click, currentURL, fillIn, visit } from "@ember/test-helpers";
@@ -27,16 +27,16 @@ acceptance("Category Edit", function (needs) {
     );
 
     assert.strictEqual(
-      queryAll(".category-breadcrumb .badge-category").text(),
+      query(".category-breadcrumb .badge-category").innerText,
       "bug"
     );
     assert.strictEqual(
-      queryAll(".category-color-editor .badge-category").text(),
+      query(".category-color-editor .badge-category").innerText,
       "bug"
     );
     await fillIn("input.category-name", "testing");
     assert.strictEqual(
-      queryAll(".category-color-editor .badge-category").text(),
+      query(".category-color-editor .badge-category").innerText,
       "testing"
     );
 
@@ -156,7 +156,7 @@ acceptance("Category Edit", function (needs) {
       "/c/1-category/edit/general",
       "it goes to the general tab"
     );
-    assert.strictEqual(queryAll("input.category-name").val(), "bug");
+    assert.strictEqual(query("input.category-name").value, "bug");
   });
 
   test("Error Saving", async function (assert) {
@@ -164,14 +164,13 @@ acceptance("Category Edit", function (needs) {
     await fillIn(".email-in", "duplicate@example.com");
     await click("#save-category");
 
-    assert.ok(visible(".bootbox"));
     assert.strictEqual(
-      queryAll(".bootbox .modal-body").html(),
+      query(".dialog-body").textContent.trim(),
       "duplicate email"
     );
 
-    await click(".bootbox .btn-primary");
-    assert.ok(!visible(".bootbox"));
+    await click(".dialog-footer .btn-primary");
+    assert.ok(!visible(".dialog-body"));
   });
 
   test("Subcategory list settings", async function (assert) {

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-describe HasCustomFields do
-  context "custom_fields" do
+RSpec.describe HasCustomFields do
+  describe "custom_fields" do
     before do
       DB.exec("create temporary table custom_fields_test_items(id SERIAL primary key)")
       DB.exec("create temporary table custom_fields_test_item_custom_fields(id SERIAL primary key, custom_fields_test_item_id int, name varchar(256) not null, value text, created_at TIMESTAMP, updated_at TIMESTAMP)")
@@ -305,6 +305,35 @@ describe HasCustomFields do
 
       test_item.save_custom_fields(true)
       expect(test_item.reload.custom_fields).to eq(expected)
+    end
+
+    it 'determines clean state correctly for mutable fields' do
+      json_field = "json_field"
+      array_field = "array_field"
+      CustomFieldsTestItem.register_custom_field_type(json_field, :json)
+      CustomFieldsTestItem.register_custom_field_type(array_field, :array)
+
+      item_with_array = CustomFieldsTestItem.new
+      expect(item_with_array.custom_fields_clean?).to eq(true)
+      item_with_array.custom_fields[array_field] = [1]
+      expect(item_with_array.custom_fields_clean?).to eq(false)
+      item_with_array.save!
+      expect(item_with_array.custom_fields_clean?).to eq(true)
+      item_with_array.custom_fields[array_field] << 2
+      expect(item_with_array.custom_fields_clean?).to eq(false)
+      item_with_array.save!
+      expect(item_with_array.custom_fields_clean?).to eq(true)
+
+      item_with_json = CustomFieldsTestItem.new
+      expect(item_with_json.custom_fields_clean?).to eq(true)
+      item_with_json.custom_fields[json_field] = { "hello" => "world" }
+      expect(item_with_json.custom_fields_clean?).to eq(false)
+      item_with_json.save!
+      expect(item_with_json.custom_fields_clean?).to eq(true)
+      item_with_json.custom_fields[json_field]["hello"] = "world2"
+      expect(item_with_json.custom_fields_clean?).to eq(false)
+      item_with_json.save!
+      expect(item_with_json.custom_fields_clean?).to eq(true)
     end
 
     describe "create_singular" do

@@ -375,7 +375,6 @@ RSpec.describe ApplicationController do
       end
 
       describe 'no logspam' do
-
         before do
           @orig_logger = Rails.logger
           Rails.logger = @fake_logger = FakeLogger.new
@@ -386,7 +385,6 @@ RSpec.describe ApplicationController do
         end
 
         it 'should handle 404 to a css file' do
-
           Discourse.cache.delete("page_not_found_topics:#{I18n.locale}")
 
           topic1 = Fabricate(:topic)
@@ -400,10 +398,9 @@ RSpec.describe ApplicationController do
           expect(response.body).to include(topic1.title)
           expect(response.body).to_not include(topic2.title)
 
-          expect(Rails.logger.fatals.length).to eq(0)
-          expect(Rails.logger.errors.length).to eq(0)
-          expect(Rails.logger.warnings.length).to eq(0)
-
+          expect(@fake_logger.fatals.length).to eq(0)
+          expect(@fake_logger.errors.length).to eq(0)
+          expect(@fake_logger.warnings.length).to eq(0)
         end
       end
 
@@ -532,6 +529,28 @@ RSpec.describe ApplicationController do
     end
   end
 
+  describe "splash_screen" do
+    let(:admin) { Fabricate(:admin) }
+
+    before do
+      admin
+    end
+
+    it 'adds a preloader splash screen when enabled' do
+      get '/'
+
+      expect(response.status).to eq(200)
+      expect(response.body).to include("d-splash")
+
+      SiteSetting.splash_screen = false
+
+      get '/'
+
+      expect(response.status).to eq(200)
+      expect(response.body).not_to include("d-splash")
+    end
+  end
+
   describe 'Delegated auth' do
     let :public_key do
       <<~TXT
@@ -646,6 +665,19 @@ RSpec.describe ApplicationController do
       expect(response.body).to include(nonce)
     end
 
+    it 'when splash screen is enabled it adds the fingerprint to the policy' do
+      SiteSetting.content_security_policy = true
+      SiteSetting.splash_screen = true
+
+      get '/latest'
+      fingerprint = SplashScreenHelper.fingerprint
+      expect(response.headers).to include('Content-Security-Policy')
+
+      script_src = parse(response.headers['Content-Security-Policy'])['script-src']
+      expect(script_src.to_s).to include(fingerprint)
+      expect(response.body).to include(SplashScreenHelper.inline_splash_screen_script)
+    end
+
     def parse(csp_string)
       csp_string.split(';').map do |policy|
         directive, *sources = policy.split
@@ -701,7 +733,7 @@ RSpec.describe ApplicationController do
     expect(response.headers['X-Robots-Tag']).to be_nil
   end
 
-  context "default locale" do
+  context "with default locale" do
     before do
       SiteSetting.default_locale = :fr
       sign_in(Fabricate(:user))
@@ -761,8 +793,8 @@ RSpec.describe ApplicationController do
       { HTTP_ACCEPT_LANGUAGE: locale }
     end
 
-    context "allow_user_locale disabled" do
-      context "accept-language header differs from default locale" do
+    context "with allow_user_locale disabled" do
+      context "when accept-language header differs from default locale" do
         before do
           SiteSetting.allow_user_locale = false
           SiteSetting.default_locale = "en"
@@ -789,8 +821,8 @@ RSpec.describe ApplicationController do
       end
     end
 
-    context "set_locale_from_accept_language_header enabled" do
-      context "accept-language header differs from default locale" do
+    context "with set_locale_from_accept_language_header enabled" do
+      context "when accept-language header differs from default locale" do
         before do
           SiteSetting.allow_user_locale = true
           SiteSetting.set_locale_from_accept_language_header = true
@@ -840,7 +872,7 @@ RSpec.describe ApplicationController do
         end
       end
 
-      context "the preferred locale includes a region" do
+      context "when the preferred locale includes a region" do
         it "returns the locale and region separated by an underscore" do
           SiteSetting.allow_user_locale = true
           SiteSetting.set_locale_from_accept_language_header = true
@@ -852,7 +884,7 @@ RSpec.describe ApplicationController do
         end
       end
 
-      context 'accept-language header is not set' do
+      context 'when accept-language header is not set' do
         it 'uses the site default locale' do
           SiteSetting.allow_user_locale = true
           SiteSetting.default_locale = 'en'
@@ -1003,6 +1035,55 @@ RSpec.describe ApplicationController do
         "HTTP_USER_AGENT" => "iam problematiccrawler"
       }
       expect(response.status).to eq(200)
+    end
+  end
+
+  describe "#banner_json" do
+    let(:admin) { Fabricate(:admin) }
+    let(:user) { Fabricate(:user) }
+    fab!(:banner_topic) { Fabricate(:banner_topic) }
+    fab!(:p1) { Fabricate(:post, topic: banner_topic, raw: "A banner topic") }
+
+    before do
+      admin # to skip welcome wizard at home page `/`
+    end
+
+    context "with login_required" do
+      before do
+        SiteSetting.login_required = true
+      end
+      it "does not include banner info for anonymous users" do
+        get "/login"
+
+        expect(response.body).to have_tag("div#data-preloaded") do |element|
+          json = JSON.parse(element.current_scope.attribute('data-preloaded').value)
+          expect(json['banner']).to eq("{}")
+        end
+      end
+
+      it "includes banner info for logged-in users" do
+        sign_in(user)
+        get "/"
+
+        expect(response.body).to have_tag("div#data-preloaded") do |element|
+          json = JSON.parse(element.current_scope.attribute('data-preloaded').value)
+          expect(JSON.parse(json['banner'])["html"]).to eq("<p>A banner topic</p>")
+        end
+      end
+    end
+
+    context "with login not required" do
+      before do
+        SiteSetting.login_required = false
+      end
+      it "does include banner info for anonymous users" do
+        get "/login"
+
+        expect(response.body).to have_tag("div#data-preloaded") do |element|
+          json = JSON.parse(element.current_scope.attribute('data-preloaded').value)
+          expect(JSON.parse(json['banner'])["html"]).to eq("<p>A banner topic</p>")
+        end
+      end
     end
   end
 end

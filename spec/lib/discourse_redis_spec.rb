@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe DiscourseRedis do
+RSpec.describe DiscourseRedis do
   it "ignore_readonly returns nil from a pure exception" do
     result = DiscourseRedis.ignore_readonly { raise Redis::CommandError.new("READONLY") }
     expect(result).to eq(nil)
@@ -15,6 +15,77 @@ describe DiscourseRedis do
 
     after do
       raw_redis.flushdb
+    end
+
+    describe 'pipelined / multi' do
+      let(:redis) { DiscourseRedis.new }
+
+      it 'should support multi commands' do
+        val = redis.multi do |transaction|
+          transaction.set 'foo', 'bar'
+          transaction.set 'bar', 'foo'
+          transaction.get 'bar'
+        end
+
+        expect(raw_redis.get('foo')).to eq(nil)
+        expect(raw_redis.get('bar')).to eq(nil)
+        expect(redis.get('foo')).to eq('bar')
+        expect(redis.get('bar')).to eq('foo')
+
+        expect(val).to eq(["OK", "OK", "foo"])
+      end
+
+      it 'should support pipelined commands' do
+        set, incr = nil
+        val = redis.pipelined do |pipeline|
+          set = pipeline.set "foo", "baz"
+          incr = pipeline.incr "baz"
+        end
+
+        expect(val).to eq(["OK", 1])
+
+        expect(set.value).to eq("OK")
+        expect(incr.value).to eq(1)
+
+        expect(raw_redis.get('foo')).to eq(nil)
+        expect(raw_redis.get('baz')).to eq(nil)
+
+        expect(redis.get('foo')).to eq("baz")
+        expect(redis.get('baz')).to eq("1")
+      end
+
+      it 'should noop pipelined commands against a readonly redis' do
+        redis.without_namespace
+          .expects(:pipelined)
+          .raises(Redis::CommandError.new("READONLY"))
+
+        set, incr = nil
+
+        val = redis.pipelined do |pipeline|
+          set = pipeline.set "foo", "baz"
+          incr = pipeline.incr "baz"
+        end
+
+        expect(val).to eq(nil)
+        expect(redis.get('foo')).to eq(nil)
+        expect(redis.get('baz')).to eq(nil)
+      end
+
+      it 'should noop multi commands against a readonly redis' do
+        redis.without_namespace
+          .expects(:multi)
+          .raises(Redis::CommandError.new("READONLY"))
+
+        val = redis.multi do |transaction|
+          transaction.set 'foo', 'bar'
+          transaction.set 'bar', 'foo'
+          transaction.get 'bar'
+        end
+
+        expect(val).to eq(nil)
+        expect(redis.get('foo')).to eq(nil)
+        expect(redis.get('bar')).to eq(nil)
+      end
     end
 
     describe 'when namespace is enabled' do
@@ -172,6 +243,58 @@ describe DiscourseRedis do
       expect(helper.eval(redis_proxy)).to eq("hello world")
 
       expect(redis_proxy.calls).to eq([:evalsha, :eval, :evalsha, :evalsha])
+    end
+  end
+
+  describe ".new_redis_store" do
+    let(:cache) { Cache.new(namespace: 'foo') }
+    let(:store) { DiscourseRedis.new_redis_store }
+
+    before do
+      cache.redis.del("key")
+      store.delete("key")
+    end
+
+    it "can store stuff" do
+      store.fetch("key") do
+        "key in store"
+      end
+
+      r = store.read("key")
+
+      expect(r).to eq("key in store")
+    end
+
+    it "doesn't collide with our Cache" do
+      store.fetch("key") do
+        "key in store"
+      end
+
+      cache.fetch("key") do
+        "key in cache"
+      end
+
+      r = store.read("key")
+
+      expect(r).to eq("key in store")
+    end
+
+    it "can be cleared without clearing our cache" do
+      cache.clear
+      store.clear
+
+      store.fetch("key") do
+        "key in store"
+      end
+
+      cache.fetch("key") do
+        "key in cache"
+      end
+
+      store.clear
+
+      expect(store.read("key")).to eq(nil)
+      expect(cache.fetch("key")).to eq("key in cache")
     end
   end
 end

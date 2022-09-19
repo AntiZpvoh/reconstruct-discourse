@@ -49,20 +49,20 @@ class Invite < ActiveRecord::Base
     self.email = Email.downcase(email) unless email.nil?
   end
 
-  attr_accessor :email_already_exists
+  attribute :email_already_exists
 
   def self.emailed_status_types
     @emailed_status_types ||= Enum.new(not_required: 0, pending: 1, bulk_pending: 2, sending: 3, sent: 4)
   end
 
   def user_doesnt_already_exist
-    @email_already_exists = false
+    self.email_already_exists = false
     return if email.blank?
     user = Invite.find_user_by_email(email)
 
     if user && user.id != self.invited_users&.first&.user_id
-      @email_already_exists = true
-      errors.add(:base, user_exists_error_msg(email, user.username))
+      self.email_already_exists = true
+      errors.add(:base, user_exists_error_msg(email))
     end
   end
 
@@ -100,9 +100,7 @@ class Invite < ActiveRecord::Base
 
     email = Email.downcase(opts[:email]) if opts[:email].present?
 
-    if user = find_user_by_email(email)
-      raise UserExists.new(new.user_exists_error_msg(email, user.username))
-    end
+    raise UserExists.new(new.user_exists_error_msg(email)) if find_user_by_email(email)
 
     if email.present?
       invite = Invite
@@ -115,6 +113,8 @@ class Invite < ActiveRecord::Base
         invite.destroy
         invite = nil
       end
+      email_digest = Digest::SHA256.hexdigest(email)
+      RateLimiter.new(invited_by, "reinvites-per-day-#{email_digest}", 3, 1.day.to_i).performed!
     end
 
     emailed_status = if opts[:skip_email] || invite&.emailed_status == emailed_status_types[:not_required]
@@ -167,11 +167,8 @@ class Invite < ActiveRecord::Base
   def redeem(email: nil, username: nil, name: nil, password: nil, user_custom_fields: nil, ip_address: nil, session: nil, email_token: nil)
     return if !redeemable?
 
-    if is_invite_link? && UserEmail.exists?(email: email)
-      raise UserExists.new I18n.t("invite_link.email_taken")
-    end
-
     email = self.email if email.blank? && !is_invite_link?
+
     InviteRedeemer.new(
       invite: self,
       email: email,
@@ -187,7 +184,9 @@ class Invite < ActiveRecord::Base
 
   def self.redeem_from_email(email)
     invite = Invite.find_by(email: Email.downcase(email))
-    InviteRedeemer.new(invite: invite, email: invite.email).redeem if invite
+    if invite.present? && invite.redeemable?
+      InviteRedeemer.new(invite: invite, email: invite.email).redeem
+    end
     invite
   end
 
@@ -270,14 +269,8 @@ class Invite < ActiveRecord::Base
     end
   end
 
-  def user_exists_error_msg(email, username)
-    sanitized_email = CGI.escapeHTML(email)
-    sanitized_username = CGI.escapeHTML(username)
-
-    I18n.t(
-      "invite.user_exists",
-      email: sanitized_email, username: sanitized_username, base_path: Discourse.base_path
-    )
+  def user_exists_error_msg(email)
+    I18n.t("invite.user_exists", email: CGI.escapeHTML(email))
   end
 end
 

@@ -40,6 +40,7 @@ th:
       long_date_without_year_with_linebreak: "MMM D <br/>LT"
       long_date_with_year_with_linebreak: "MMM D, 'YY <br/>LT"
       wrap_ago: "%{date} วันก่อน"
+      wrap_on: "เมื่อ %{date}"
       tiny:
         half_a_minute: "< 1 นาที"
         less_than_x_seconds:
@@ -65,12 +66,24 @@ th:
         date_month: "MMM D"
         date_year: "MMM 'YY"
       medium:
+        less_than_x_minutes:
+          other: "ไม่ถึง %{count} นาที"
         x_minutes:
           other: "%{count} นาที"
         x_hours:
           other: "%{count} ชั่วโมง"
+        about_x_hours:
+          other: "ราว %{count} ชั่วโมง"
         x_days:
           other: "%{count} วัน"
+        x_months:
+          other: "%{count} เดือน"
+        about_x_years:
+          other: "ราว %{count} ปี"
+        over_x_years:
+          other: "กว่า %{count} ปี"
+        almost_x_years:
+          other: "เกือบ %{count} ปี"
         date_year: "MMM D, 'YY"
       medium_with_ago:
         x_minutes:
@@ -93,12 +106,19 @@ th:
       previous_month: "เดือนที่แล้ว"
       next_month: "เดือนถัดไป"
       placeholder: วัน
+      from_placeholder: "ตั้งแต่วันที่"
       to_placeholder: "ไปวันที่"
     share:
       topic_html: 'กระทู้: <span class="topic-title">%{topicTitle}</span>'
+      post: "โพสต์ #%{postNumber} โดย @%{username}"
       close: "ปิด"
+      twitter: "แชร์บนทวิตเตอร์"
+      facebook: "แชร์บนเฟสบุ๊ค"
+      email: "ส่งทางอีเมล"
+      url: "คัดลอกและแชร์ URL"
     action_codes:
       public_topic: "ทำให้กระทู้นี้เป็นสาธารณะ %{when} "
+      open_topic: "แปลงเป็นหัวเรื่องเมื่อ %{when}"
       private_topic: "ทำให้กระทู้นี้เป็นข้อความส่วนตัว"
       split_topic: "แบ่งกระทู้นี้เมื่อ %{when}"
       invited_user: "ได้เชิญ %{who} %{when}"
@@ -128,15 +148,22 @@ th:
         enabled: "ทำให้เป็นแบนเนอร์%{when} จะปรากฏที่ด้านบนสุดของทุกหน้าจนกว่าจะผู้ใช้งานจะกดลบ"
         disabled: "ลบแบนเนอร์นี้%{when} จะไม่ปรากฏที่ด้านบนของหน้าใดๆ"
       forwarded: "ส่งต่ออีเมลข้างต้นแล้ว"
+    topic_admin_menu: "การดำเนินการสำหรับหัวเรื่อง"
+    skip_to_main_content: "ข้ามไปยังเนื้อหา"
     emails_are_disabled: "อีเมลขาออกทั้งหมดถูกปิดโดยผู้ดูแลระบบ จะไม่มีอีเมลแจ้งเตือนใดๆถูกส่งออกไป"
+    emails_are_disabled_non_staff: "การส่งอีเมลออกถูกปิดใช้งานสำหรับผู้ใช้ที่ไม่ใช่เจ้าหน้าที่"
     software_update_prompt:
+      message: "เราอัปเดตไซต์นี้เมื่อสักครู่ โปรด<span>รีเฟรช</span>หน้านี้ หรือคุณอาจเกิดเหตุการณ์ที่ไม่ตรงตามต้องการ"
       dismiss: "ซ่อน"
+    bootstrap_invite_button_title: "ส่งคำเชิญ"
     themes:
       default_description: "ค่าเริ่มต้น"
+      only_admins: "(ข้อความนี้จะแสดงเฉพาะผู้ดูแลไซต์เท่านั้น)"
     s3:
       regions:
         ap_northeast_1: "เอเชียแปซิฟิก (โตเกียว)"
         ap_northeast_2: "เอเชียแปซิฟิก (โซล)"
+        ap_east_1: "เอเชียแปซิฟิก (ฮ่องกง)"
         ap_south_1: "เอเชียแปซิฟิก (มุมไบ)"
         ap_southeast_1: "เอเชียแปซิฟิก (สิงคโปร์)"
         ap_southeast_2: "เอเชียแปซิฟิก (ซิดนีย์)"
@@ -145,6 +172,7 @@ th:
         cn_northwest_1: "จีน (หนิงเซี่ย)"
         eu_central_1: "อียู (แฟรงก์เฟิร์ต)"
         eu_north_1: "อียู (สต็อกโฮล์ม)"
+        eu_south_1: "สหภาพยุโรป (มิลาน)"
         eu_west_1: "อียู (ไอร์แลนด์)"
         eu_west_2: "อียู (ลอนดอน)"
         eu_west_3: "อียู (ปารีส)"
@@ -160,6 +188,8 @@ th:
     not_implemented: "ขออภัย! คุณสมบัตินั้นยังไม่เสร็จสมบูรณ์"
     no_value: "ไม่ใช่"
     yes_value: "ใช่"
+    ok_value: "ตกลง"
+    cancel_value: "ยกเลิก"
     submit: "ตกลง"
     generic_error: "ขออภัย เกิดข้อผิดพลาดขึ้น"
     generic_error_with_reason: "เกิดข้อผิดพลาดขึ้น: %{error}"
@@ -198,6 +228,8 @@ th:
     max_of_count: "สูงสุดของ %{count}"
     character_count:
       other: "%{count} ตัวอักษร"
+    period_chooser:
+      aria_label: "กรองตามช่วงเวลา"
     related_messages:
       title: "ข้อความที่เกี่ยวข้อง"
       see_all: 'ดู<a href="%{path}">ข้อความทั้งหมด</a>จาก @%{username}'
@@ -213,6 +245,9 @@ th:
       moderators: "ผู้ดูแล"
       stat:
         all_time: "ตลอดเวลา"
+        last_day: "24 ชั่วโมงที่ผ่านมา"
+        last_7_days: "7 วันที่ผ่านมา"
+        last_30_days: "30 วันที่ผ่านมา"
       like_count: "ถูกใจ"
       topic_count: "กระทู้"
       post_count: "โพสต์"
@@ -222,19 +257,26 @@ th:
       contact_info: "ในกรณีที่เกิดเหตุฉุกเฉินหรือประเด็นสำคัญที่ส่งผลต่อเว็บไซต์นี้ กรุณาติดต่อเราที่ %{contact_info}"
     bookmarked:
       title: "บุ๊กมาร์ก"
+      edit_bookmark: "แก้ไขบุ๊กมาร์ก"
       clear_bookmarks: "ล้างบุ๊กมาร์ก"
       help:
         bookmark: "คลิกเพื่อ บุ๊คมาร์ค ที่โพสแรกของกระทู้นี้"
         unbookmark: "คลิกเพื่อลบบุ๊กมาร์กทั้งหมดในกระทู้นี้"
     bookmarks:
+      created: "คุณได้บุ๊กมาร์กโพสต์นี้ %{name}"
+      created_generic: "คุณได้บุ๊กมาร์กสิ่งนี้ %{name}"
+      create: "สร้างบุ๊กมาร์ก"
+      edit: "แก้ไขบุ๊กมาร์ก"
       not_bookmarked: "บุ๊กมาร์กโพสต์นี้"
       remove: "ลบบุ๊กมาร์ก"
       delete: "ลบบุ๊กมาร์ก"
+      confirm_delete: "คุณแน่ใจหรือไม่ว่าต้องการลบบุ๊กมาร์กนี้ การเตือนความจำจะถูกลบออกด้วย"
       confirm_clear: "คุณแน่ใจหรือว่าต้องการล้างบุ๊กมาร์กทั้งหมดจากกระทู้นี้"
       save: "บันทึก"
       invalid_custom_datetime: "วันและเวลาที่คุณกรอกไม่ถูกต้อง กรุณาลองอีกครั้ง"
       list_permission_denied: "คุณไม่ได้รับอนุญาตให้ดูบุ๊กมาร์กของผู้ใช้งานนี้"
       auto_delete_preference:
+        label: "หลังจากที่คุณได้รับแจ้ง"
         when_reminder_sent: "ลบบุ๊กมาร์ก"
       search: "ค้นหา"
       reminders:
@@ -400,6 +442,7 @@ th:
       days:
         other: "วัน"
     time_shortcut:
+      now: "ตอนนี้"
       later_today: "ภายหลังในวันนี้"
       next_business_day: "ในวันทำการถัดไป"
       tomorrow: "พรุ่งนี้"
@@ -407,7 +450,10 @@ th:
       this_weekend: "สัปดาห์นี้"
       start_of_next_business_week: "วันจันทร์"
       start_of_next_business_week_alt: "วันจันทร์หน้า"
+      next_week: "สัปดาห์หน้า"
       next_month: "เดือนหน้า"
+      forever: "ตลอดไป"
+      never: "ไม่เคย"
       custom: "วันและเวลาที่กำหนดเอง"
     user_action:
       user_posted_topic: "<a href='%{userUrl}'>%{user}</a> โพสต์ <a href='%{topicUrl}'>กระทู้</a>"
@@ -732,6 +778,8 @@ th:
       allow_private_messages: "อนุญาตให้ผู้ใช้อื่นส่งข้อความส่วนตัวหาฉัน"
       external_links_in_new_tab: "เปิดลิงก์ภายนอกทั้งหมดในแท็บใหม่"
       enable_quoting: "เปิดการตอบกลับการอ้างอิงโดยไฮไลท์ข้อความ"
+      experimental_sidebar:
+        options: "ตัวเลือก"
       change: "เปลี่ยนแปลง"
       featured_topic: "กระทู้เด่น"
       moderator: "%{user} เป็นผู้ดูแลระบบ"
@@ -762,7 +810,7 @@ th:
       watched_first_post_categories: "กำลังดูโพสต์แรก"
       watched_first_post_tags: "กำลังดูโพสต์แรก"
       muted_categories: "ปิดเสียง"
-      regular_categories: "ทั่วไป"
+      regular_categories: "ปกติ"
       delete_account: "ลบบัญชีของฉัน"
       delete_account_confirm: "คุณแน่ใจไหมที่จะลบบัญชีอย่างถาวร การดำเนินการนี้ไม่สามารถยกเลิกได้"
       deleted_yourself: "บัญชีของคุณถูกลบเรียบร้อยแล้ว"
@@ -1032,8 +1080,6 @@ th:
           title: "ลิงก์คำเชิญ"
           success: "สร้างลิงก์คำเชิญสำเร็จแล้ว!"
           error: "มีข้อผิดพลาดในการสร้างลิงก์คำเชิญ"
-          max_redemptions_allowed_label: "มีกี่คนที่ได้รับอนุญาตให้ลงทะเบียนใช้ลิงก์นี้"
-          expires_at: "ลิงก์คำเชิญนี้จะหมดอายุเมื่อไร"
       password:
         title: "รหัสผ่าน"
         too_short: "รหัสผ่านสั้นเกินไป"
@@ -1104,6 +1150,8 @@ th:
         sent_by: "ส่งโดย"
         private_message: "ข้อความส่วนตัว"
         the_topic: "กระทู้"
+    user_status:
+      save: "บันทึก"
     loading: "กำลังโหลด..."
     errors:
       prev_page: "พยายามที่จะโหลด"
@@ -1150,7 +1198,6 @@ th:
       other: ตอบ
     signup_cta:
       sign_up: "สมัครสมาชิก"
-      hide_session: "เตือนฉันพรุ่งนี้"
       hide_forever: "ไม่เป็นไร"
     summary:
       enabled_description: "คุณกำลังดูสรุปของกระทู้นี้ : นี่คือโพสที่น่าสนใจที่สุดที่หลายๆคนแนะนำ"
@@ -1282,8 +1329,6 @@ th:
         other: "คุณสามารถเลือกได้ %{count} รายการเท่านั้น"
       min_content_not_reached:
         other: "เลือกอย่างน้อย %{count} รายการ"
-      invalid_selection_length:
-        other: "การเลือกต้องมีอย่างน้อย %{count} ตัวอักษร"
     date_time_picker:
       from: จาก
       to: ถึง
@@ -1344,7 +1389,6 @@ th:
       cancel: "ยกเลิก"
       create_topic: "สร้างกระทู้"
       create_pm: "ข้อความ"
-      users_placeholder: "เพิ่มผู้ใช้"
       title_placeholder: "บทสนทนานี้เกี่ยวกับอะไร ขอสั้นๆ 1 ประโยค"
       title_or_link_placeholder: "พิมพ์หัวข้อ หรือวางลิงก์ที่นี่"
       edit_reason_placeholder: "ทำไมคุณถึงแก้ไข"
@@ -1399,9 +1443,6 @@ th:
         edit: แก้ไข
         reply_to_post:
           desc: ตอบกลับโพสต์ที่เจาะจง
-        reply_as_private_message:
-          label: ข้อความใหม่
-          desc: สร้างข้อความส่วนตัวใหม่
         reply_to_topic:
           label: ตอบกลับกระทู้
         create_topic:
@@ -1423,6 +1464,7 @@ th:
       none: "ไม่สามารถโหลดการแจ้งเตือนได้ในขณะนี้"
       empty: "ไม่พบการแจ้งเตือน"
       post_approved: "โพสต์ของคุณได้รับการอนุมัติ"
+      watching_first_post_label: "กระทู้ใหม่"
       mentioned: "<span>%{username}</span>%{description}"
       group_mentioned: "<span>%{username}</span>%{description}"
       quoted: "<span>%{username}</span>%{description}"
@@ -1663,16 +1705,6 @@ th:
         when: "เมื่อ:"
         time_frame_required: "กรุณาเลือกระยะเวลา"
         duration: "ช่วงเวลา"
-      auto_update_input:
-        now: "ตอนนี้"
-        later_today: "ภายหลังในวันนี้"
-        tomorrow: "พรุ่งนี้"
-        later_this_week: "ภายหลังในสัปดาห์นี้"
-        this_weekend: "สัปดาห์นี้"
-        next_week: "สัปดาห์หน้า"
-        next_month: "เดือนหน้า"
-        forever: "ตลอดไป"
-        pick_date_and_time: "เลือกวันและเวลา"
       temp_open:
         title: "เปิดชั่วคราว"
       temp_close:
@@ -1759,8 +1791,6 @@ th:
         unpin: "เลิกปักหมุดกระทู้"
         unarchive: "เลิกเก็บกระทู้เข้าคลัง"
         archive: "เก็บกระทู้เข้าคลัง"
-        invisible: "ทำให้ไม่แสดงในรายชื่อ"
-        visible: "ทำให้แสดงในรายชื่อ"
         reset_read: "ล้างข้อมูลการอ่าน"
         make_private: "สร้างข้อความส่วนตัว"
       feature:
@@ -2241,6 +2271,7 @@ th:
       full: "สร้าง / ตอบ / ดู"
       create_post: "ตอบ / ดู"
       readonly: "ดู"
+    preloader_text: "กำลังโหลด"
     lightbox:
       download: "ดาวน์โหลด"
       close: "ปิด (Esc)"
@@ -2308,7 +2339,6 @@ th:
         edit: "%{shortcut} แก้ไขโพสต์"
         delete: "%{shortcut} ลบโพสต์"
         mark_muted: "%{shortcut} ปิดการแจ้งเตือนกระทู้"
-        mark_regular: "%{shortcut} หัวข้อ ทั่วไป (มาตราฐาน)"
         mark_tracking: "%{shortcut} ติดตามกระทู้"
         mark_watching: "%{shortcut} ดูกระทู้"
         print: "%{shortcut}พิมพ์กระทู้"
@@ -2338,7 +2368,6 @@ th:
     download_calendar:
       download: "ดาวน์โหลด"
     tagging:
-      all_tags: "แท็กทั้งหมด"
       other_tags: "แท็กอื่น"
       selector_all_tags: "แท็กทั้งหมด"
       selector_no_tags: "ไม่มีแท็ก"
@@ -2377,7 +2406,7 @@ th:
         tracking:
           title: "กำลังติดตาม"
         regular:
-          title: "ทั่วไป"
+          title: "ปกติ"
         muted:
           title: "ปิด"
       groups:
@@ -2409,6 +2438,49 @@ th:
       names:
         member: "สมาชิก"
         regular: "ทั่วไป"
+    sidebar:
+      unread_count:
+        other: "%{count} ยังไม่อ่าน"
+      new_count:
+        other: "%{count} ใหม่"
+      more: "อื่นๆ..."
+      sections:
+        messages:
+          header_link_text: "ข้อความ"
+          links:
+            inbox: "กล่องข้อความ"
+            sent: "ส่ง"
+            new: "ใหม่"
+            new_with_count: "ใหม่ (%{count})"
+            unread: "ยังไม่อ่าน"
+            unread_with_count: "ยังไม่อ่าน (%{count})"
+            archive: "คลัง"
+        tags:
+          header_link_text: "ป้าย"
+        categories:
+          header_link_text: "หมวดหมู่"
+        community:
+          header_link_text: "ชุมชน"
+          links:
+            about:
+              content: "เกี่ยวกับ"
+            admin:
+              content: "แอดมิน"
+            badges:
+              content: "เหรียญ"
+            faq:
+              content: "คำถามที่พบบ่อย"
+            tracked:
+              content: "ติดตาม"
+            groups:
+              content: "กลุ่ม"
+              title: "กลุ่มทั้งหมด"
+            users:
+              content: "ผู้ใช้"
+            my_posts:
+              content: "โพสต์ของฉัน"
+              draft_count:
+                other: "%{count}แบบร่าง"
   admin_js:
     type_to_filter: "พิมพ์เพื่อกรอง..."
     admin:
@@ -3099,8 +3171,6 @@ th:
           topics: "กระทู้"
   wizard_js:
     wizard:
-      done: "เสร็จ"
-      finish: "เสร็จสิ้น"
       back: "กลับ"
       next: "ต่อไป"
       upload: "อัปโหลด"

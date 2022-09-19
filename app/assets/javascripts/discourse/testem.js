@@ -2,11 +2,11 @@ const TapReporter = require("testem/lib/reporters/tap_reporter");
 const { shouldLoadPluginTestJs } = require("discourse/lib/plugin-js");
 
 class Reporter {
+  failReports = [];
+
   constructor() {
     this._tapReporter = new TapReporter(...arguments);
   }
-
-  failReports = [];
 
   reportMetadata(tag, metadata) {
     if (tag === "summary-line") {
@@ -68,9 +68,36 @@ module.exports = {
   reporter: Reporter,
 };
 
-if (shouldLoadPluginTestJs()) {
-  const target = `http://localhost:${process.env.UNICORN_PORT || "3000"}`;
+const target = `http://127.0.0.1:${process.env.UNICORN_PORT || "3000"}`;
+
+if (process.argv.includes("-t")) {
+  // Running testem without ember cli. Probably for theme-qunit
+  const testPage = process.argv[process.argv.indexOf("-t") + 1];
+
+  module.exports.proxies = {};
+  module.exports.proxies[`/*/theme-qunit`] = {
+    target: `${target}${testPage}`,
+    ignorePath: true,
+    xfwd: true,
+  };
+  module.exports.proxies["/*/*"] = { target, xfwd: true };
+
+  module.exports.middleware = [
+    function (app) {
+      // Make the testem.js file available under /assets
+      // so it's within the app's CSP
+      app.get("/assets/testem.js", function (req, res, next) {
+        req.url = "/testem.js";
+        next();
+      });
+    },
+  ];
+} else if (shouldLoadPluginTestJs()) {
+  // Running with ember cli, but we want to pass through plugin request to Rails
   module.exports.proxies = {
+    "/assets/plugins/*_extra.js": {
+      target,
+    },
     "/assets/discourse/tests/active-plugins.js": {
       target,
     },
@@ -78,6 +105,9 @@ if (shouldLoadPluginTestJs()) {
       target,
     },
     "/assets/discourse/tests/plugin-tests.js": {
+      target,
+    },
+    "/plugins/": {
       target,
     },
   };

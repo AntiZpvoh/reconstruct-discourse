@@ -5,7 +5,11 @@ class Site
   include ActiveModel::Serialization
 
   cattr_accessor :preloaded_category_custom_fields
-  self.preloaded_category_custom_fields = Set.new
+
+  def self.reset_preloaded_category_custom_fields
+    self.preloaded_category_custom_fields = Set.new
+  end
+  reset_preloaded_category_custom_fields
 
   ##
   # Sometimes plugins need to have additional data or options available
@@ -181,10 +185,10 @@ class Site
     json = MultiJson.dump(SiteSerializer.new(site, root: false, scope: guardian))
 
     if guardian.anonymous?
-      Discourse.redis.multi do
-        Discourse.redis.setex 'site_json', 1800, json
-        Discourse.redis.set 'site_json_seq', seq
-        Discourse.redis.set 'site_json_version', Discourse.git_version
+      Discourse.redis.multi do |transaction|
+        transaction.setex 'site_json', 1800, json
+        transaction.set 'site_json_seq', seq
+        transaction.set 'site_json_version', Discourse.git_version
       end
     end
 
@@ -199,4 +203,24 @@ class Site
     MessageBus.publish(SITE_JSON_CHANNEL, '')
   end
 
+  def self.welcome_topic_banner_cache_key(user_id)
+    "show_welcome_topic_banner:#{user_id}"
+  end
+
+  def self.show_welcome_topic_banner?(guardian)
+    return false if !guardian.is_admin?
+    user_id = guardian.user.id
+
+    show_welcome_topic_banner = Discourse.cache.read(welcome_topic_banner_cache_key(user_id))
+    return show_welcome_topic_banner unless show_welcome_topic_banner.nil?
+
+    show_welcome_topic_banner = if (user_id == User.first_login_admin_id)
+      Post.find_by("topic_id = :topic_id AND post_number = 1 AND version = 1 AND created_at > :created_at", topic_id: SiteSetting.welcome_topic_id, created_at: 1.month.ago).present?
+    else
+      false
+    end
+
+    Discourse.cache.write(welcome_topic_banner_cache_key(user_id), show_welcome_topic_banner)
+    show_welcome_topic_banner
+  end
 end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'swagger_helper'
 
-describe 'posts' do
+RSpec.describe 'posts' do
 
   let(:'Api-Key') { Fabricate(:api_key).key }
   let(:'Api-Username') { 'system' }
@@ -19,6 +19,7 @@ describe 'posts' do
       operationId 'listPosts'
       parameter name: 'Api-Key', in: :header, type: :string, required: true
       parameter name: 'Api-Username', in: :header, type: :string, required: true
+      parameter name: 'before', in: :query, type: :string, description: "Load posts with an id lower than this value. Useful for pagination.", required: false
       produces 'application/json'
 
       response '200', 'latest posts' do
@@ -357,7 +358,7 @@ describe 'posts' do
       parameter name: :post_body, in: :body, schema: {
         type: :object,
         properties: {
-          locked: { type: :boolean }
+          locked: { type: :string }
         }, required: [ 'locked' ]
       }
 
