@@ -1141,6 +1141,7 @@ class UsersController < ApplicationController
   end
 
   def send_activation_email
+    logger.info "[email debug] send_activation_email"
     if current_user.blank? || !current_user.staff?
       RateLimiter.new(nil, "activate-hr-#{request.remote_ip}", 30, 1.hour).performed!
       RateLimiter.new(nil, "activate-min-#{request.remote_ip}", 6, 1.minute).performed!

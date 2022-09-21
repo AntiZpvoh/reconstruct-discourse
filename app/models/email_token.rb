@@ -93,6 +93,7 @@ class EmailToken < ActiveRecord::Base
   end
 
   def self.enqueue_signup_email(email_token, to_address: nil)
+    logger.info "[email debug] enqueue_signup_email"
     Jobs.enqueue(
       :critical_user_email,
       type: "signup",

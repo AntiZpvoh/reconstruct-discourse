@@ -11,6 +11,7 @@ module Jobs
 
     def execute(args)
       super(args)
+      Rails.logger.info "[email debug] critical user email execute"
     end
   end
 end

@@ -287,10 +287,12 @@ module Jobs
   end
 
   def self.enqueue(job, opts = {})
+    Rails.logger.info "[email debug] jobs enqueue method"
     if job.instance_of?(Class)
       klass = job
     else
       klass = "::Jobs::#{job.to_s.camelcase}".constantize
+      Rails.logger.info "[email debug] #{klass}"
     end
 
     # Unless we want to work on all sites
