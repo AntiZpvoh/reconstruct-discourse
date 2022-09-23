@@ -33,6 +33,7 @@ module Email
     end
 
     def send
+      Rails.logger.info "[email debug] email send start"
       bypass_disable = BYPASS_DISABLE_TYPES.include?(@email_type.to_s)
 
       if SiteSetting.disable_emails == "yes" && !bypass_disable
@@ -328,6 +329,7 @@ module Email
 
       email_log.save!
       email_log
+      Rails.logger.info "[email debug] email send end"
     end
 
     def find_user
