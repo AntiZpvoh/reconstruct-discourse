@@ -35,6 +35,7 @@ module Jobs
       # of extra work when emails are disabled.
       return if quit_email_early?
 
+      Rails.logger.info "[email debug] user email execute (no quit email early)"
       send_user_email(args)
 
       if args[:user_id].present? && args[:type].to_s == "digest"
@@ -44,6 +45,7 @@ module Jobs
     end
 
     def send_user_email(args)
+      Rails.logger.info "[email debug] send user email"
       post = nil
       notification = nil
       type = args[:type]
@@ -55,6 +57,7 @@ module Jobs
       return skip(SkippedEmailLog.reason_types[:user_email_no_user]) if !user
       return skip(SkippedEmailLog.reason_types[:user_email_no_email]) if to_address == "no_email_found"
 
+      Rails.logger.info "[email debug] send user email (not skip1)"
       if args[:post_id].present?
         post = Post.find_by(id: args[:post_id])
 
@@ -67,6 +70,7 @@ module Jobs
         end
       end
 
+      Rails.logger.info "[email debug] send user email (not skip2)"
       if args[:notification_id].present?
         notification = Notification.find_by(id: args[:notification_id])
       end
@@ -79,8 +83,11 @@ module Jobs
         args
       )
 
+      Rails.logger.info "[email debug] send user email (before message)"
       if message
+        Rails.logger.info "[email debug] before sending user email"
         Email::Sender.new(message, type, user).send
+        Rails.logger.info "[email debug] after send user email"
 
         if (b = user.user_stat.bounce_score) > SiteSetting.bounce_score_erode_on_send
           # erode bounce score each time we send an email
